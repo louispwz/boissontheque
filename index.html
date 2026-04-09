@@ -28,7 +28,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 /* TOPBAR */
 .tb-row1{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.app-title{font-family:'Boldonse',serif;font-size:32px;font-weight:800;color:var(--accent2);letter-spacing:-.02em}
+.app-title{font-family:'Boldonse',serif;font-size:24px;font-weight:800;color:var(--accent2);letter-spacing:-.02em}
 .app-subtitle{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
 .tb-row2{display:flex;align-items:center;gap:8px}
 .view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;flex:1}
@@ -178,8 +178,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #csvInput{display:none}
-/* FOOTER */
-#footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px;text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
+/* PODCAST */
+.podcast-question{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.podcast-question-text{flex:1;font-size:14px;line-height:1.4}
+.podcast-question-delete{color:var(--red);font-size:16px;padding:2px;cursor:pointer}
 /* FOOTER */
 #footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px;text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
 </style>
@@ -189,7 +191,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div id="topbar">
     <div class="tb-row1">
       <div>
-        <div class="app-title">Boissontheque</div>
+        <div class="app-title">Boissonthèque</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
         <div class="sync-dot" id="syncDot" title="Statut sync"></div>
@@ -212,6 +214,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <button class="tab-btn active" onclick="switchTab(0)">Ajouter</button>
     <button class="tab-btn" onclick="switchTab(1)">Tableau</button>
     <button class="tab-btn" onclick="switchTab(2)">Métriques</button>
+    <button class="tab-btn" id="podcastTab" onclick="switchTab(3)" style="display:none">Podcast</button>
   </div>
   <div id="panels">
     <!-- PANEL ADD -->
@@ -316,6 +319,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div class="chart-section"><div class="chart-title">Lieux fréquentés</div><div id="locChart"></div></div>
       <div class="chart-section"><div class="chart-title">Top mieux notées</div><div id="topList"></div></div>
     </div>
+
+    <!-- PANEL PODCAST -->
+    <div class="panel" id="panel3">
+      <div class="section-label">Questions pour soirée</div>
+      <div class="field" style="margin-bottom:16px">
+        <label>Nouvelle question</label>
+        <textarea id="podcastQuestion" placeholder="Ecrit une question rigolote ou qui permet d'avoir une belle discussion"></textarea>
+      </div>
+      <button class="btn-accent" onclick="addPodcastQuestion()" style="margin-bottom:20px">Ajouter la question</button>
+
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button class="btn-ghost" onclick="drawRandomQuestion()" style="flex:1">🎲 Tirer une question</button>
+        <button class="btn-ghost" onclick="showAllQuestions()" style="flex:1">📋 Voir toutes les questions</button>
+      </div>
+
+      <div id="podcastContent"></div>
+    </div>
   </div>
 </div>
 
@@ -325,6 +345,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="sheet-title" id="authTitle">Comptes</div>
     <div class="user-list" id="userList"></div>
     <div class="divider" id="firstDivider"></div>
+    <div style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+        <input type="checkbox" id="podcastMode" onchange="togglePodcastMode()" style="width:16px;height:16px">
+        <span>Mode Podcast</span>
+      </label>
+    </div>
     <button class="btn-ghost" id="createBtn" onclick="toggleCreateForm()" style="width:100%;margin-bottom:8px">+ Créer un compte</button>
     <div class="new-user-form" id="createForm">
       <div class="section-label" style="margin-top:0">Nouveau compte</div>
@@ -392,11 +418,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 // PALETTES
 // ══════════════════════════════════════════
 const PALETTES=[
+  {id:'latte',name:'Latte',accent:'#c08050',accent2:'#daa070',dim:'rgba(192,128,80,0.15)',bg:'#0e0c0a',bg2:'#1c1814',bg3:'#28231e',bg4:'#342e28',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#f2ece4',text2:'#a09080',text3:'#5c5048',swatches:['#c08050','#daa070','#0e0c0a','#28231e']},
   {id:'whisky',name:'Whisky',accent:'#d4a843',accent2:'#e8c06a',dim:'rgba(212,168,67,0.15)',bg:'#0f0e0b',bg2:'#1a1915',bg3:'#242320',bg4:'#2e2d29',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.14)',text:'#f0ece2',text2:'#9b9688',text3:'#5a5850',swatches:['#d4a843','#e8c06a','#0f0e0b','#1a1915']},
   {id:'matcha',name:'Matcha',accent:'#5aaa6e',accent2:'#7ec98f',dim:'rgba(90,170,110,0.15)',bg:'#0b0f0d',bg2:'#131a15',bg3:'#1c2620',bg4:'#25312a',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e8f0ea',text2:'#8aa08e',text3:'#4a5c50',swatches:['#5aaa6e','#7ec98f','#0b0f0d','#1c2620']},
   {id:'water',name:'Aqua',accent:'#4a96d4',accent2:'#72b8f0',dim:'rgba(74,150,212,0.15)',bg:'#080d12',bg2:'#101820',bg3:'#18242e',bg4:'#20303c',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e0eef8',text2:'#7a9ab8',text3:'#405868',swatches:['#4a96d4','#72b8f0','#080d12','#18242e']},
   {id:'rosé',name:'Rosé',accent:'#d45a8a',accent2:'#e87aaa',dim:'rgba(212,90,138,0.15)',bg:'#110c10',bg2:'#1e1219',bg3:'#291822',bg4:'#33202c',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.13)',text:'#f5e8f0',text2:'#a07888',text3:'#5a4050',swatches:['#d45a8a','#e87aaa','#110c10','#291822']},
-  {id:'latte',name:'Latte',accent:'#c08050',accent2:'#daa070',dim:'rgba(192,128,80,0.15)',bg:'#0e0c0a',bg2:'#1c1814',bg3:'#28231e',bg4:'#342e28',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#f2ece4',text2:'#a09080',text3:'#5c5048',swatches:['#c08050','#daa070','#0e0c0a','#28231e']},
   {id:'blue_lagoon',name:'Blue Lagoon',accent:'#50e0c0',accent2:'#80f0d8',dim:'rgba(80,224,192,0.12)',bg:'#080a0c',bg2:'#10161c',bg3:'#182028',bg4:'#202c36',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#ddf4f0',text2:'#70a098',text3:'#385850',swatches:['#50e0c0','#80f0d8','#080a0c','#182028']},
   {id:'lait',name:'Lait',accent:'#404040',accent2:'#606060',dim:'rgba(64,64,64,0.12)',bg:'#f5f2ee',bg2:'#ede9e2',bg3:'#e2ddd5',bg4:'#d8d2c8',border:'rgba(0,0,0,0.08)',border2:'rgba(0,0,0,0.14)',text:'#1a1816',text2:'#6a6460',text3:'#a09890',swatches:['#404040','#606060','#f5f2ee','#e2ddd5']},
   {id:'vin',name:'Vin',accent:'#9a60d4',accent2:'#b888f0',dim:'rgba(154,96,212,0.15)',bg:'#0c0810',bg2:'#14101c',bg3:'#1e1828',bg4:'#282034',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.13)',text:'#f0e8f8',text2:'#9078a8',text3:'#504060',swatches:['#9a60d4','#b888f0','#0c0810','#1e1828']},
@@ -477,8 +503,10 @@ let currentUserId=localStorage.getItem('boisso_uid')||db.users[0]?.id||'u1';
 if(!db.users.find(u=>u.id===currentUserId)) currentUserId=db.users[0]?.id;
 let viewMode=localStorage.getItem('boisso_view')||'all';
 let currentPaletteId=localStorage.getItem('boisso_palette')||'whisky';
-let currentRating=0,editId=null,activeFilter='tous',deleteId=null,selectedColor=AVATAR_COLORS[0],locCoords=null,editingUserId=null,editingSelectedColor=null;
+let currentRating=0,editId=null,activeFilter='tous',deleteId=null,deleteType='entry',selectedColor=AVATAR_COLORS[0],locCoords=null,editingUserId=null,editingSelectedColor=null;
 let tlTab='count',tlChartInstance=null;
+let podcastMode=localStorage.getItem('boisso_podcast')==='true';
+let podcastQuestions = [];
 
 // ══════════════════════════════════════════
 // PALETTE
@@ -519,6 +547,135 @@ function switchTab(i){
   document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
   if(i===1)renderTable();
   if(i===2)renderMetrics();
+  if(i===3)renderPodcast();
+}
+
+// ══════════════════════════════════════════
+// PODCAST
+// ══════════════════════════════════════════
+async function loadPodcastQuestions(){
+  const questions = await supaFetch('podcast_questions?select=*&order=created_at.desc');
+  if(questions) podcastQuestions = questions;
+}
+
+function togglePodcastMode(){
+  podcastMode = document.getElementById('podcastMode').checked;
+  localStorage.setItem('boisso_podcast', podcastMode);
+  updatePodcastTabVisibility();
+  if(podcastMode) loadPodcastQuestions();
+}
+
+function updatePodcastTabVisibility(){
+  const tab = document.getElementById('podcastTab');
+  tab.style.display = podcastMode ? 'block' : 'none';
+  if(!podcastMode && document.querySelector('.tab-btn.active')?.textContent === 'Podcast'){
+    switchTab(0); // Retour à l'onglet Ajouter
+  }
+}
+
+function renderPodcast(){
+  if(podcastQuestions.length === 0){
+    document.getElementById('podcastContent').innerHTML = '<div class="empty-state"><div class="empty-icon">🎙️</div><div class="empty-text">Aucune question pour le moment</div></div>';
+  } else {
+    showAllQuestions();
+  }
+}
+
+async function addPodcastQuestion(){
+  const question = document.getElementById('podcastQuestion').value.trim();
+  if(!question){
+    toast('Veuillez saisir une question');
+    return;
+  }
+  
+  const questionData = {
+    id: 'q' + Date.now(),
+    text: question,
+    user_id: currentUserId,
+    created_at: new Date().toISOString()
+  };
+  
+  const result = await supaFetch('podcast_questions', 'POST', [questionData]);
+  if(result){
+    podcastQuestions.unshift(questionData);
+    document.getElementById('podcastQuestion').value = '';
+    toast('Question ajoutée !');
+    renderPodcast();
+  } else {
+    toast('Erreur lors de l\'ajout');
+  }
+}
+
+function drawRandomQuestion(){
+  if(podcastQuestions.length === 0){
+    toast('Aucune question disponible');
+    return;
+  }
+  const randomIndex = Math.floor(Math.random() * podcastQuestions.length);
+  const question = podcastQuestions[randomIndex];
+  
+  const content = document.getElementById('podcastContent');
+  content.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:30px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:200px">
+      <div style="font-size:24px;margin-bottom:20px">🎲</div>
+      <div style="font-size:20px;font-weight:600;color:var(--accent);line-height:1.4;max-width:90%">${question.text}</div>
+    </div>
+  `;
+}
+
+function showAllQuestions(){
+  const content = document.getElementById('podcastContent');
+  if(podcastQuestions.length === 0){
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">Aucune question créée</div></div>';
+    return;
+  }
+  
+  content.innerHTML = '<div style="font-size:14px;color:var(--text3);margin-bottom:12px">Toutes les questions (' + podcastQuestions.length + ')</div>';
+  podcastQuestions.forEach(q => {
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:8px;';
+    
+    const questionText = document.createElement('div');
+    questionText.style.cssText = 'font-size:14px;margin-bottom:8px;';
+    questionText.textContent = q.text;
+    
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;align-items:center;';
+    
+    const date = new Date(q.created_at).toLocaleDateString('fr-FR');
+    const dateSpan = document.createElement('span');
+    dateSpan.style.cssText = 'font-size:11px;color:var(--text3);';
+    dateSpan.textContent = date;
+    
+    const deleteBtn = ['u1775727884418', 'u1775728528202'].includes(currentUserId) ? 
+      `<button class="btn-danger btn-sm" onclick="askDeletePodcastQuestion('${q.id}')" style="padding:4px 8px;margin-left:8px">×</button>` : '';
+    
+    actions.innerHTML = `<span>${date}</span>${deleteBtn}`;
+    
+    div.appendChild(questionText);
+    div.appendChild(actions);
+    content.appendChild(div);
+  });
+}
+
+function askDeletePodcastQuestion(id){
+  const question = podcastQuestions.find(q => q.id === id);
+  if(!question) return;
+  
+  deleteId = id;
+  document.getElementById('confirmSub').textContent = `Supprimer cette question ? Action irréversible.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+async function deletePodcastQuestion(id){
+  const result = await supaFetch(`podcast_questions?id=eq.${id}`, 'DELETE');
+  if(result !== null){
+    podcastQuestions = podcastQuestions.filter(q => q.id !== id);
+    toast('Question supprimée');
+    renderPodcast();
+  } else {
+    toast('Erreur lors de la suppression');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -598,16 +755,42 @@ function cancelEdit(){resetForm();}
 function askDelete(id){
   const e=db.entries.find(x=>x.id===id);if(!e)return;
   deleteId=id;
+  deleteType='entry';
   document.getElementById('confirmSub').textContent=`Supprimer "${e.name}" ? Action irréversible.`;
   document.getElementById('confirmOverlay').classList.add('open');
 }
+
+function askDeletePodcastQuestion(id){
+  // Vérifier si l'utilisateur est un admin autorisé
+  const adminIds = ['u1775727884418', 'u1775728528202'];
+  if(!adminIds.includes(currentUserId)){
+    toast('Seul un administrateur peut supprimer les questions');
+    return;
+  }
+  
+  const question = podcastQuestions.find(q => q.id === id);
+  if(!question) return;
+  
+  deleteId = id;
+  deleteType = 'podcast';
+  document.getElementById('confirmSub').textContent = `Supprimer cette question ? Action irréversible.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
 async function confirmDelete(){
   if(!deleteId)return;
-  db.entries=db.entries.filter(e=>e.id!==deleteId);
-  saveLocalDB();await deleteEntryRemote(deleteId);
-  deleteId=null;closeConfirm();toast('Supprimée');renderTable();
+  
+  if(deleteType === 'entry'){
+    db.entries=db.entries.filter(e=>e.id!==deleteId);
+    saveLocalDB();await deleteEntryRemote(deleteId);
+    toast('Supprimée');renderTable();
+  } else if(deleteType === 'podcast'){
+    await deletePodcastQuestion(deleteId);
+  }
+  
+  deleteId=null;deleteType='entry';closeConfirm();
 }
-function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');deleteId=null;}
+function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');deleteId=null;deleteType='entry';}
 
 // ══════════════════════════════════════════
 // TABLE
@@ -787,7 +970,12 @@ function importCSV(event){
 // ══════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════
-function openAuth(){renderUserList();renderColorRow();document.getElementById('authOverlay').classList.add('open');}
+function openAuth(){
+  renderUserList();
+  renderColorRow();
+  document.getElementById('podcastMode').checked = podcastMode;
+  document.getElementById('authOverlay').classList.add('open');
+}
 function closeAuth(e){if(!e||e.target===document.getElementById('authOverlay'))document.getElementById('authOverlay').classList.remove('open');}
 function isDark(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000<128;}
 function renderUserList(){
@@ -894,6 +1082,9 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 applyPalette(currentPaletteId);
 setView(viewMode);
 updateUserPill();
+updatePodcastTabVisibility();
+document.getElementById('podcastMode').checked = podcastMode;
+if(podcastMode) loadPodcastQuestions();
 renderTable();
 syncFromSupabase(false);
 </script>

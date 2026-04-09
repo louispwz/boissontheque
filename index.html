@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Boissonthèque</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Boldunse:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
@@ -28,7 +28,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 /* TOPBAR */
 .tb-row1{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.app-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--accent2);letter-spacing:-.02em}
+.app-title{font-family:'Boldonse',serif;font-size:20px;font-weight:700;color:var(--accent2);letter-spacing:-.02em}
 .app-subtitle{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
 .tb-row2{display:flex;align-items:center;gap:8px}
 .view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;flex:1}
@@ -119,7 +119,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .top-rank{font-size:12px;color:var(--text3);width:18px}
 .top-name{flex:1;font-size:13px}
 .top-brewery{font-size:11px;color:var(--text3)}
-.top-score{font-size:14px;font-weight:700;color:var(--accent);font-family:'Playfair Display',serif}
+.top-score{font-size:14px;font-weight:600;color:var(--accent);font-family:'Boldonse',serif}
 .io-row{display:flex;gap:7px;margin-bottom:14px}
 /* TIMELINE */
 .tl-tabs{display:flex;gap:4px;margin-bottom:12px}
@@ -131,7 +131,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .overlay.open{opacity:1;pointer-events:all}
 .sheet{background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);padding:20px 16px 40px;width:100%;max-width:480px;transform:translateY(30px);transition:transform .3s cubic-bezier(.25,.46,.45,.94);max-height:88vh;overflow-y:auto}
 .overlay.open .sheet{transform:translateY(0)}
-.sheet-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--accent2);margin-bottom:14px}
+.sheet-title{font-family:'Boldonse',serif;font-size:18px;font-weight:500;color:var(--accent2);margin-bottom:14px}
 .sheet::-webkit-scrollbar{width:3px}
 .sheet::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 /* USER LIST */
@@ -176,8 +176,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div id="topbar">
     <div class="tb-row1">
       <div>
-        <div class="app-title">Boissonthèque</div>
-        <div class="app-subtitle">Ma cave personnelle</div>
+        <div class="app-title">Boissontheque</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
         <div class="sync-dot" id="syncDot" title="Statut sync"></div>
@@ -212,19 +211,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
           <select id="f_type">
             <option value="">Choisir…</option>
             <optgroup label="🍺 Bières">
-              <option value="blonde">Blonde</option><option value="blanche">Blanche</option>
-              <option value="brune">Brune</option><option value="ambrée">Ambrée</option>
-              <option value="IPA">IPA</option><option value="ale">Ale</option>
-              <option value="stout">Stout</option><option value="sour">Sour</option><option value="lager">Lager</option>
+              <option value="blonde">Blonde</option>
+              <option value="blanche">Blanche</option>
+              <option value="brune">Brune</option>
+              <option value="ambrée">Ambrée</option>
+              <option value="IPA">IPA</option>
+              <option value="ale">Ale</option>
+              <option value="stout">Stout</option>
+              <option value="sour">Sour</option>
+              <option value="lager">Lager</option>
             </optgroup>
             <optgroup label="🍎 Autres alcools">
-              <option value="cidre">Cidre</option><option value="vin blanc">Vin blanc</option>
-              <option value="vin rouge">Vin rouge</option><option value="rosé">Rosé</option>
-              <option value="pétillant">Pétillant</option><option value="spiritueux">Spiritueux</option>
+              <option value="cidre">Cidre</option>
+              <option value="vin blanc">Vin blanc</option>
+              <option value="vin rouge">Vin rouge</option>
+              <option value="rosé">Rosé</option>
+              <option value="pétillant">Pétillant</option>
+              <option value="spiritueux">Spiritueux</option>
             </optgroup>
             <optgroup label="🥤 Sans alcool">
-              <option value="sirop">Sirop</option><option value="jus">Jus de fruit</option>
-              <option value="sodas">Soda</option><option value="thé">Thé / Infusion / Café</option>
+              <option value="sirop">Sirop</option>
+              <option value="jus">Jus de fruit</option>
+              <option value="sodas">Soda</option>
+              <option value="thé">Thé / Infusion / Café</option>
               <option value="autre">Autre</option>
             </optgroup>
           </select>
@@ -246,11 +255,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div class="field">
         <label>Note / 10</label>
         <div class="star-wrap" id="starRow">
-          <span class="star" data-v="1" onclick="setRating(1)">★</span><span class="star" data-v="2" onclick="setRating(2)">★</span>
-          <span class="star" data-v="3" onclick="setRating(3)">★</span><span class="star" data-v="4" onclick="setRating(4)">★</span>
-          <span class="star" data-v="5" onclick="setRating(5)">★</span><span class="star" data-v="6" onclick="setRating(6)">★</span>
-          <span class="star" data-v="7" onclick="setRating(7)">★</span><span class="star" data-v="8" onclick="setRating(8)">★</span>
-          <span class="star" data-v="9" onclick="setRating(9)">★</span><span class="star" data-v="10" onclick="setRating(10)">★</span>
+          <span class="star" data-v="1" onclick="setRating(1)">★</span>
+          <span class="star" data-v="2" onclick="setRating(2)">★</span>
+          <span class="star" data-v="3" onclick="setRating(3)">★</span>
+          <span class="star" data-v="4" onclick="setRating(4)">★</span>
+          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+          <span class="star" data-v="6" onclick="setRating(6)">★</span>
+          <span class="star" data-v="7" onclick="setRating(7)">★</span>
+          <span class="star" data-v="8" onclick="setRating(8)">★</span>
+          <span class="star" data-v="9" onclick="setRating(9)">★</span>
+          <span class="star" data-v="10" onclick="setRating(10)">★</span>
           <span class="rating-display" id="ratingVal">—</span>
         </div>
       </div>
@@ -753,7 +767,7 @@ function selectUser(id){
   currentUserId=id;localStorage.setItem('boisso_uid',id);
   updateUserPill();activeFilter='tous';
   document.getElementById('authOverlay').classList.remove('open');
-  renderTable();toast('👋 Bonjour, '+db.users.find(u=>u.id===id).name+' !');
+  renderTable();toast('Coucou bebou '+db.users.find(u=>u.id===id).name+' !');
 }
 function updateUserPill(){
   const u=db.users.find(x=>x.id===currentUserId)||db.users[0];

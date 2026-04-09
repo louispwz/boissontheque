@@ -444,7 +444,7 @@ async function pushUser(user) {
 // LOCAL DB
 // ══════════════════════════════════════════
 function loadLocalDB() {
-  try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]}; }
+  try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[],entries:[]}; }
   catch(e) { return {users:[],entries:[]}; }
 }
 function saveLocalDB() { localStorage.setItem('boisso_db',JSON.stringify(db)); }

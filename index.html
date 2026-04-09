@@ -10,7 +10,7 @@
 :root {
   --bg:#0f0e0b;--bg2:#1a1915;--bg3:#242320;--bg4:#2e2d29;
   --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
-  --accent:#d4a843;--accent2:#e8c06a;--accent-dim:rgba(212,168,67,0.15);
+  --accent:#d4a843;--accent2:#e8c06a;--accent-dim:rgba(212,168,67,0.15);.u
   --text:#f0ece2;--text2:#9b9688;--text3:#5a5850;
   --red:#c45a3a;--green:#4a8c5c;--radius:12px;--radius-sm:8px;
 }
@@ -34,10 +34,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;flex:1}
 .vt-btn{flex:1;padding:5px 8px;background:transparent;border:none;border-radius:16px;font-size:11px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;transition:all .2s;white-space:nowrap;text-align:center}
 .vt-btn.active{background:var(--accent-dim);color:var(--accent)}
-.user-pill{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 10px 5px 5px;cursor:pointer;transition:border-color .2s;flex-shrink:0}
-.user-pill:hover{border-color:var(--accent)}
-.user-avatar-sm{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
-.user-pill-name{font-size:12px;font-weight:500;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-pill, .vt-btn, .tab-btn, .chip, .user-item {-webkit-user-select: none; -ms-user-select: none; user-select: none; cursor: pointer; -webkit-tap-highlight-color: transparent;}
+.user-pill:active, .vt-btn:active, .tab-btn:active, .chip:active { background: var(--bg4) !important; transform: scale(0.96); transition: transform 0.1s;}
+.user-pill {display: flex;align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 20px; padding: 5px 10px 5px 5px; transition: border-color 0.2s, transform 0.1s;flex-shrink: 0;}
+.user-pill:hover { border-color: var(--accent); }
 /* SYNC STATUS */
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
 .sync-dot.ok{background:var(--green)}
@@ -459,19 +459,47 @@ async function pushUser(user) {
 // LOCAL DB
 // ══════════════════════════════════════════
 function loadLocalDB() {
-  try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[],entries:[]}; }
-  catch(e) { return {users:[],entries:[]}; }
+    try { return JSON.parse(localStorage.getItem('boisso_db')) || { users: [], entries: [] }; }
+    catch(e) { return { users: [], entries: [] }; }
 }
-function saveLocalDB() { localStorage.setItem('boisso_db',JSON.stringify(db)); }
+function saveLocalDB() { localStorage.setItem('boisso_db', JSON.stringify(db)); }
 
 let db = loadLocalDB();
-let currentUserId = localStorage.getItem('boisso_uid')||db.users[0].id;
-if(!db.users.find(u=>u.id===currentUserId)) currentUserId=db.users[0].id;
-let viewMode = localStorage.getItem('boisso_view')||'all';
-let currentPaletteId = localStorage.getItem('boisso_palette')||'whisky';
-let currentRating=0, editId=null, activeFilter='tous', deleteId=null, selectedColor=AVATAR_COLORS[0], locCoords=null;
-let tlTab='count', tlChartInstance=null;
+let currentUserId = localStorage.getItem('boisso_uid');
+if (!currentUserId && db.users.length > 0) {
+    currentUserId = db.users.id; 
+} else if (currentUserId && !db.users.find(u => u.id === currentUserId)) {
+    currentUserId = db.users.length > 0 ? db.users.id : null;
+}
 
+let viewMode = localStorage.getItem('boisso_view') || 'all';
+let currentPaletteId = localStorage.getItem('boisso_palette') || 'whisky';
+let currentRating = 0;
+let editId = null;
+let activeFilter = 'tous';
+let deleteId = null;
+let selectedColor = AVATAR_COLORS; 
+let locCoords = null;
+let tlTab = 'count';
+let tlChartInstance = null;
+
+function updateUserPill() {
+    const u = db.users.find(x => x.id === currentUserId);
+    const pillName = document.getElementById('userPillName');
+    const pillAvatar = document.getElementById('userAvatarSm');
+
+    if (u) {
+        pillAvatar.textContent = u.emoji || u.name; 
+        pillAvatar.style.background = u.color;
+        pillAvatar.style.color = isDark(u.color) ? '#fff' : '#111';
+        pillName.textContent = u.name;
+    } else {
+        pillAvatar.textContent = "?";
+        pillAvatar.style.background = "var(--bg3)";
+        pillAvatar.style.color = "var(--text3)";
+        pillName.textContent = "Compte";
+    }
+}
 // ══════════════════════════════════════════
 // PALETTE
 // ══════════════════════════════════════════

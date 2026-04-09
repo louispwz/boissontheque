@@ -22,13 +22,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .tab-btn{flex:1;padding:9px 4px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;transition:color .2s,border-color .2s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 #panels{flex:1;overflow:hidden;position:relative}
-.panel{position:absolute;inset:0;overflow-y:auto;padding:14px;display:none}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:14px 14px 70px 14px;display:none}
 .panel.active{display:block}
 .panel::-webkit-scrollbar{width:3px}
 .panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 /* TOPBAR */
 .tb-row1{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.app-title{font-family:'Boldonse',serif;font-size:20px;font-weight:800;color:var(--accent2);letter-spacing:-.02em}
+.app-title{font-family:'Boldonse',serif;font-size:40px;font-weight:800;color:var(--accent2);letter-spacing:-.02em}
 .app-subtitle{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
 .tb-row2{display:flex;align-items:center;gap:8px}
 .view-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;flex:1}
@@ -142,12 +142,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .user-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .user-name{font-size:14px;font-weight:500}
 .user-meta{font-size:11px;color:var(--text3);margin-top:1px}
-.check-mark{margin-left:auto;color:var(--accent);font-size:16px}
+.user-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.check-mark{color:var(--accent);font-size:16px}
+.btn-edit{background:transparent;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0;transition:color .2s;touch-action:manipulation}
+.btn-edit:hover{color:var(--accent)}
 .divider{height:1px;background:var(--border);margin:12px 0}
-.new-user-form{background:var(--bg3);border-radius:var(--radius);padding:13px}
-.color-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px}
+.new-user-form{background:var(--bg3);border-radius:var(--radius);padding:13px;display:none}
+.new-user-form.show{display:block}
+.color-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;margin-bottom:12px}
 .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;touch-action:manipulation}
 .color-dot.selected{border-color:var(--text);transform:scale(1.15)}
+.custom-color-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px;background:var(--bg4);border-radius:var(--radius-sm)}
+.custom-color-input{width:40px;height:40px;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;appearance:none;-webkit-appearance:none}
+.custom-color-input::-webkit-color-swatch-wrapper{padding:1px}
+.custom-color-input::-webkit-color-swatch{border:none;border-radius:4px}
+.custom-color-label{font-size:12px;color:var(--text2);flex:1}
 /* PALETTE */
 .palette-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
 .palette-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .2s,background .2s;touch-action:manipulation}
@@ -169,6 +178,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #csvInput{display:none}
+/* FOOTER */
+#footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px;text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
+/* FOOTER */
+#footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px;text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
 </style>
 </head>
 <body>
@@ -182,21 +195,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         <div class="sync-dot" id="syncDot" title="Statut sync"></div>
         <button class="btn-ghost btn-sm" onclick="openPalette()" style="padding:6px 10px;font-size:16px;touch-action:manipulation">🎨</button>
         <div class="user-pill" id="userPill" onclick="openAuth()">
-          <div class="user-avatar-sm" id="userAvatarSm">🍺</div>
-          <span class="user-pill-name" id="userPillName">Moi</span>
+          <div class="user-avatar-sm" id="userAvatarSm"></div>
+          <span class="user-pill-name" id="userPillName">Compte</span>
           <span style="font-size:9px;color:var(--text3)">▾</span>
         </div>
       </div>
     </div>
     <div class="tb-row2">
       <div class="view-toggle">
-        <button class="vt-btn active" id="vt-all" onclick="setView('all')">🌍 Tous</button>
-        <button class="vt-btn" id="vt-self" onclick="setView('self')">🔒 Mes boissons</button>
+        <button class="vt-btn" id="vt-self" onclick="setView('self')">Mes boissons</button>
+        <button class="vt-btn active" id="vt-all" onclick="setView('all')">Tout le monde</button>
       </div>
     </div>
   </div>
   <div id="tabs">
-    <button class="tab-btn active" onclick="switchTab(0)">＋ Ajouter</button>
+    <button class="tab-btn active" onclick="switchTab(0)">Ajouter</button>
     <button class="tab-btn" onclick="switchTab(1)">Tableau</button>
     <button class="tab-btn" onclick="switchTab(2)">Métriques</button>
   </div>
@@ -204,13 +217,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <!-- PANEL ADD -->
     <div class="panel active" id="panel0">
       <div id="formTitle" class="section-label">Nouvelle boisson</div>
-      <div class="field"><label>Nom *</label><input id="f_name" placeholder="ex: Chouffe, Loïc Raison, Sirop menthe…"/></div>
+      <div class="field"><label>Nom *</label><input id="f_name" placeholder="Nom de la boisson"/></div>
       <div class="field-row">
-        <div class="field"><label>Producteur / Brasserie</label><input id="f_brewery" placeholder="ex: Achouffe"/></div>
+        <div class="field"><label>Producteur / Brasserie</label><input id="f_brewery" placeholder="Producteur / Brasserie"/></div>
         <div class="field"><label>Type *</label>
           <select id="f_type">
             <option value="">Choisir…</option>
-            <optgroup label="🍺 Bières">
+            <optgroup label="Avec Alcool">
               <option value="blonde">Blonde</option>
               <option value="blanche">Blanche</option>
               <option value="brune">Brune</option>
@@ -220,8 +233,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <option value="stout">Stout</option>
               <option value="sour">Sour</option>
               <option value="lager">Lager</option>
-            </optgroup>
-            <optgroup label="🍎 Autres alcools">
               <option value="cidre">Cidre</option>
               <option value="vin blanc">Vin blanc</option>
               <option value="vin rouge">Vin rouge</option>
@@ -229,26 +240,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
               <option value="pétillant">Pétillant</option>
               <option value="spiritueux">Spiritueux</option>
             </optgroup>
-            <optgroup label="🥤 Sans alcool">
+            <optgroup label="Sans Alcool">
               <option value="sirop">Sirop</option>
               <option value="jus">Jus de fruit</option>
               <option value="sodas">Soda</option>
-              <option value="thé">Thé / Infusion / Café</option>
+              <option value="thé">Thé</option>
+              <option value="infusion">Infusion</option>
+              <option value="café">Café</option>
               <option value="autre">Autre</option>
             </optgroup>
           </select>
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Degré (%)</label><input id="f_abv" type="number" step="0.1" min="0" max="100" placeholder="ex: 5.2"/></div>
-        <div class="field"><label>Prix / 50cl (€)</label><input id="f_price" type="number" step="0.10" min="0" placeholder="ex: 3.50"/></div>
+        <div class="field"><label>Degré (%)</label><input id="f_abv" type="number" step="0.1" min="0" max="100" placeholder=""/></div>
+        <div class="field"><label>Prix / 50cl (€)</label><input id="f_price" type="number" step="0.10" min="0" placeholder=""/></div>
       </div>
-      <div class="field"><label>Notes de dégustation</label><textarea id="f_notes" placeholder="Arômes, texture, accords…"></textarea></div>
+      <div class="field"><label>Notes de dégustation</label><textarea id="f_notes" placeholder="Spécificités à rajouter"></textarea></div>
       <div class="field">
         <label>Lieu de dégustation</label>
         <div class="loc-row">
           <input id="f_loc" placeholder="ex: Bar Le Central, Montpellier" style="flex:1"/>
-          <button class="loc-btn" id="locBtn" onclick="getLocation()">📍 GPS</button>
+          <button class="loc-btn" id="locBtn" onclick="getLocation()">GPS</button>
         </div>
         <div class="loc-status" id="locStatus"></div>
       </div>
@@ -283,8 +296,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <!-- PANEL METRICS -->
     <div class="panel" id="panel2">
       <div class="io-row">
-        <button class="btn-ghost" onclick="exportCSV()" style="flex:1">⬇ CSV</button>
-        <button class="btn-ghost" onclick="triggerImport()" style="flex:1">⬆ Import</button>
+        <button class="btn-ghost" onclick="exportCSV()" style="flex:1">⬇ Export CSV</button>
+        <button class="btn-ghost" onclick="triggerImport()" style="flex:1">⬆ Import CSV</button>
         <button class="btn-ghost" onclick="syncFromSupabase(true)" style="padding:8px 12px">↻</button>
       </div>
       <input type="file" id="csvInput" accept=".csv" onchange="importCSV(event)"/>
@@ -309,18 +322,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 <!-- AUTH OVERLAY -->
 <div class="overlay" id="authOverlay" onclick="closeAuth(event)">
   <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-title">Comptes</div>
+    <div class="sheet-title" id="authTitle">Comptes</div>
     <div class="user-list" id="userList"></div>
-    <div class="divider"></div>
-    <div class="new-user-form">
-      <div class="section-label" style="margin-top:0">Créer un compte</div>
+    <div class="divider" id="firstDivider"></div>
+    <button class="btn-ghost" id="createBtn" onclick="toggleCreateForm()" style="width:100%;margin-bottom:8px">+ Créer un compte</button>
+    <div class="new-user-form" id="createForm">
+      <div class="section-label" style="margin-top:0">Nouveau compte</div>
       <div class="field-row" style="margin-bottom:8px">
-        <div class="field" style="margin-bottom:0"><label>Prénom</label><input id="nu_name" placeholder="ex: Marie"/></div>
+        <div class="field" style="margin-bottom:0"><label>Prénom</label><input id="nu_name" placeholder="Nom"/></div>
         <div class="field" style="margin-bottom:0"><label>Emoji</label><input id="nu_emoji" placeholder="🍺" maxlength="2" style="text-align:center;font-size:18px"/></div>
       </div>
       <div class="section-label" style="margin-top:10px">Couleur</div>
       <div class="color-row" id="colorRow"></div>
-      <button class="btn-ghost" onclick="createUser()" style="width:100%;margin-top:11px">Créer ce compte</button>
+      <div class="custom-color-row">
+        <label class="custom-color-label" for="customColor">Couleur perso</label>
+        <input type="color" id="customColor" class="custom-color-input" value="#d4a843" onchange="selectColor(this.value)"/>
+      </div>
+      <button class="btn-accent" onclick="createUser()" style="width:100%;margin-top:11px">Créer ce compte</button>
+      <button class="btn-ghost" onclick="toggleCreateForm()" style="width:100%;margin-top:8px">Annuler</button>
+    </div>
+    <div class="new-user-form" id="editForm">
+      <div class="section-label" style="margin-top:0">Modifier le compte</div>
+      <div class="field-row" style="margin-bottom:8px">
+        <div class="field" style="margin-bottom:0"><label>Prénom</label><input id="ed_name" placeholder="Nom"/></div>
+        <div class="field" style="margin-bottom:0"><label>Emoji</label><input id="ed_emoji" placeholder="🍺" maxlength="2" style="text-align:center;font-size:18px"/></div>
+      </div>
+      <div class="section-label" style="margin-top:10px">Couleur</div>
+      <div class="color-row" id="colorRowEdit"></div>
+      <div class="custom-color-row">
+        <label class="custom-color-label" for="customColorEdit">Couleur perso</label>
+        <input type="color" id="customColorEdit" class="custom-color-input" value="#d4a843" onchange="selectColorEdit(this.value)"/>
+      </div>
+      <button class="btn-accent" onclick="saveUserEdit()" style="width:100%;margin-top:11px">Enregistrer</button>
+      <button class="btn-danger" onclick="deleteUserProfile()" style="width:100%;margin-top:8px">Supprimer ce compte</button>
+      <button class="btn-ghost" onclick="cancelEdit()" style="width:100%;margin-top:8px">Annuler</button>
     </div>
     <div style="height:8px"></div>
     <button class="btn-ghost" onclick="closeAuth()" style="width:100%">Fermer</button>
@@ -368,7 +403,7 @@ const PALETTES=[
 ];
 
 const AVATAR_COLORS=['#d4a843','#4a8c5c','#3a6da8','#993556','#c45a3a','#7c5cbf','#2a9d8f','#e07b39'];
-const TYPE_ICONS={blonde:'🍺',blanche:'☁️',brune:'🍫','ambrée':'🟠',IPA:'🌿',ale:'🍻',stout:'⬛',sour:'🍋',lager:'🍺',cidre:'🍎','vin blanc':'🥂','vin rouge':'🍷','rosé':'🌸',pétillant:'✨',spiritueux:'🥃',sirop:'🧴',jus:'🥤',sodas:'🥤','thé':'🫖',autre:'🔮'};
+const TYPE_ICONS={blonde:'🍺',blanche:'☁️',brune:'🍫','ambrée':'🟠',IPA:'🌿',ale:'🍻',stout:'⬛',sour:'🍋',lager:'🍺',cidre:'🍎','vin blanc':'🥂','vin rouge':'🍷','rosé':'🌸',pétillant:'✨',spiritueux:'🥃',sirop:'🧴',jus:'🥤',sodas:'🥤','thé':'🫖',infusion:'🌾',café:'☕',autre:'🔮'};
 const TYPE_BG={blonde:'rgba(212,168,67,0.15)',blanche:'rgba(200,196,180,0.15)',brune:'rgba(100,60,20,0.25)','ambrée':'rgba(180,80,20,0.2)',IPA:'rgba(50,120,50,0.2)',ale:'rgba(150,90,30,0.2)',stout:'rgba(40,40,40,0.4)',sour:'rgba(200,200,0,0.1)',lager:'rgba(212,168,67,0.1)',cidre:'rgba(100,180,60,0.15)','vin blanc':'rgba(200,190,100,0.15)','vin rouge':'rgba(120,20,30,0.2)','rosé':'rgba(200,100,130,0.15)',pétillant:'rgba(150,200,255,0.1)',spiritueux:'rgba(150,100,50,0.2)',sirop:'rgba(200,50,150,0.1)',jus:'rgba(255,150,0,0.1)',sodas:'rgba(0,150,255,0.1)','thé':'rgba(100,60,20,0.15)',autre:'rgba(100,100,100,0.1)'};
 
 // ══════════════════════════════════════════
@@ -395,14 +430,14 @@ async function syncFromSupabase(showToast=false){
     supaFetch('entries?select=*&order=date.desc,created_at.desc'),
     supaFetch('users?select=*')
   ]);
-  if(entries===null||users===null){setSyncDot('err');if(showToast)toast('⚠ Erreur de synchronisation');return;}
+  if(entries===null||users===null){setSyncDot('err');if(showToast)toast('Erreur de synchronisation');return;}
   db.entries=entries.map(r=>({id:r.id,userId:r.user_id,name:r.name,brewery:r.brewery||'',type:r.type||'autre',abv:r.abv,price:r.price,notes:r.notes||'',location:r.location||'',coords:r.coords,rating:r.rating,date:r.date||r.created_at?.slice(0,10)||''}));
   if(users.length){
     db.users=users.map(r=>({id:r.id,name:r.name,color:r.color||'#d4a843',emoji:r.emoji||'🍺'}));
     if(!db.users.find(u=>u.id===currentUserId)) currentUserId=db.users[0].id;
   }
   saveLocalDB();setSyncDot('ok');
-  if(showToast) toast('✓ Données synchronisées !');
+  if(showToast) toast('Données synchronisées');
   renderTable();updateUserPill();
 }
 
@@ -410,7 +445,7 @@ async function pushEntry(entry){
   setSyncDot('loading');
   const row={id:entry.id,user_id:entry.userId,name:entry.name,brewery:entry.brewery||null,type:entry.type,abv:entry.abv||null,price:entry.price||null,notes:entry.notes||null,location:entry.location||null,coords:entry.coords||null,rating:entry.rating||null,date:entry.date};
   const res=await supaFetch('entries?on_conflict=id','POST',[row]);
-  if(res===null){setSyncDot('err');toast('⚠ Sync échouée, données sauvées localement');}else setSyncDot('ok');
+  if(res===null){setSyncDot('err');toast('Sync échouée, données sauvées localement');}else setSyncDot('ok');
 }
 async function updateEntry(entry){
   setSyncDot('loading');
@@ -432,8 +467,8 @@ async function pushUser(user){
 // LOCAL DB
 // ══════════════════════════════════════════
 function loadLocalDB(){
-  try{return JSON.parse(localStorage.getItem('boisso_db'))||{users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]};}
-  catch(e){return{users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]};}
+  try{return JSON.parse(localStorage.getItem('boisso_db'))||{users:[],entries:[]};}
+  catch(e){return{users:[],entries:[]};}
 }
 function saveLocalDB(){localStorage.setItem('boisso_db',JSON.stringify(db));}
 
@@ -442,7 +477,7 @@ let currentUserId=localStorage.getItem('boisso_uid')||db.users[0]?.id||'u1';
 if(!db.users.find(u=>u.id===currentUserId)) currentUserId=db.users[0]?.id;
 let viewMode=localStorage.getItem('boisso_view')||'all';
 let currentPaletteId=localStorage.getItem('boisso_palette')||'whisky';
-let currentRating=0,editId=null,activeFilter='tous',deleteId=null,selectedColor=AVATAR_COLORS[0],locCoords=null;
+let currentRating=0,editId=null,activeFilter='tous',deleteId=null,selectedColor=AVATAR_COLORS[0],locCoords=null,editingUserId=null,editingSelectedColor=null;
 let tlTab='count',tlChartInstance=null;
 
 // ══════════════════════════════════════════
@@ -497,7 +532,7 @@ function setRating(v){
 function getLocation(){
   const btn=document.getElementById('locBtn'),status=document.getElementById('locStatus');
   btn.textContent='⏳ GPS…';status.textContent='Localisation…';
-  if(!navigator.geolocation){status.textContent='GPS non disponible';btn.textContent='📍 GPS';return;}
+  if(!navigator.geolocation){status.textContent='GPS non disponible';btn.textContent='GPS';return;}
   navigator.geolocation.getCurrentPosition(async pos=>{
     locCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
     btn.textContent='✓ GPS';btn.className='loc-btn has-loc';
@@ -510,20 +545,20 @@ function getLocation(){
       if(suggestion&&!document.getElementById('f_loc').value) document.getElementById('f_loc').value=suggestion;
       status.textContent='📍 '+(d.display_name||'Position enregistrée').slice(0,60);
     }catch(e){status.textContent=`📍 ${locCoords.lat.toFixed(4)}, ${locCoords.lng.toFixed(4)}`;}
-  },_=>{status.textContent='Impossible de localiser';btn.textContent='📍 GPS';},{timeout:10000,enableHighAccuracy:true});
+  },_=>{status.textContent='Impossible de localiser';btn.textContent='GPS';},{timeout:10000,enableHighAccuracy:true});
 }
 function uid(){return 'e'+Date.now()+Math.random().toString(36).slice(2,5);}
 async function saveEntry(){
   const name=document.getElementById('f_name').value.trim();
   const type=document.getElementById('f_type').value;
-  if(!name||!type){toast('⚠ Nom et type obligatoires');return;}
+  if(!name||!type){toast('Nom et type obligatoires');return;}
   const entry={id:editId||uid(),userId:currentUserId,name,brewery:document.getElementById('f_brewery').value.trim(),type,abv:parseFloat(document.getElementById('f_abv').value)||null,price:parseFloat(document.getElementById('f_price').value)||null,notes:document.getElementById('f_notes').value.trim(),location:document.getElementById('f_loc').value.trim(),coords:locCoords,rating:currentRating||null,date:new Date().toISOString().slice(0,10)};
   if(editId){
     const idx=db.entries.findIndex(e=>e.id===editId);
     if(idx>=0)db.entries[idx]=entry;
-    saveLocalDB();await updateEntry(entry);toast('✓ Modifiée !');
+    saveLocalDB();await updateEntry(entry);toast('Modifiée');
   }else{
-    db.entries.unshift(entry);saveLocalDB();await pushEntry(entry);toast('✓ Enregistrée !');
+    db.entries.unshift(entry);saveLocalDB();await pushEntry(entry);toast('Enregistrée');
   }
   resetForm();switchTab(1);
 }
@@ -534,7 +569,7 @@ function resetForm(){
   document.querySelectorAll('.star').forEach(s=>s.classList.remove('on'));
   document.getElementById('ratingVal').textContent='—';
   document.getElementById('locStatus').textContent='';
-  document.getElementById('locBtn').textContent='📍 GPS';
+  document.getElementById('locBtn').textContent='GPS';
   document.getElementById('locBtn').className='loc-btn';
   document.getElementById('formTitle').textContent='Nouvelle boisson';
   document.getElementById('editCancelRow').style.display='none';
@@ -570,7 +605,7 @@ async function confirmDelete(){
   if(!deleteId)return;
   db.entries=db.entries.filter(e=>e.id!==deleteId);
   saveLocalDB();await deleteEntryRemote(deleteId);
-  deleteId=null;closeConfirm();toast('🗑 Supprimée');renderTable();
+  deleteId=null;closeConfirm();toast('Supprimée');renderTable();
 }
 function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');deleteId=null;}
 
@@ -708,7 +743,7 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;a.download='boissotheque_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('✓ CSV exporté !');
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('CSV exporté');
 }
 function triggerImport(){document.getElementById('csvInput').click();}
 function importCSV(event){
@@ -717,12 +752,12 @@ function importCSV(event){
   reader.onload=async e=>{
     const text=e.target.result;
     const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
-    if(lines.length<2){toast('⚠ Fichier CSV vide');return;}
+    if(lines.length<2){toast('Fichier CSV vide');return;}
     const sep=lines[0].includes(';')?';':',';
     const parseRow=row=>{const res=[];let cur='',inQ=false;for(let i=0;i<row.length;i++){if(row[i]==='"'&&inQ&&row[i+1]==='"'){cur+='"';i++;}else if(row[i]==='"'){inQ=!inQ;}else if(row[i]===sep&&!inQ){res.push(cur.trim());cur='';}else cur+=row[i];}res.push(cur.trim());return res;};
     const header=parseRow(lines[0]).map(h=>h.toLowerCase().replace(/[^a-zéèê]/g,''));
     const idx={name:header.findIndex(h=>h.includes('nom')),brewery:header.findIndex(h=>h.includes('product')||h.includes('brass')),type:header.findIndex(h=>h.includes('type')),abv:header.findIndex(h=>h.includes('degr')||h.includes('abv')),price:header.findIndex(h=>h.includes('prix')||h.includes('price')),rating:header.findIndex(h=>h.includes('note')||h.includes('rating')),location:header.findIndex(h=>h.includes('lieu')||h.includes('loc')),notes:header.findIndex(h=>h.includes('spc')||h.includes('notes')||h.includes('dgustation')),date:header.findIndex(h=>h.includes('date')),user:header.findIndex(h=>h.includes('util')||h.includes('user'))};
-    if(idx.name===-1){toast('⚠ Colonne "Nom" introuvable');return;}
+    if(idx.name===-1){toast('Colonne "Nom" introuvable');return;}
     let imported=0,skipped=0;
     const newEntries=[];
     lines.slice(1).forEach(line=>{
@@ -743,7 +778,7 @@ function importCSV(event){
       setSyncDot(res===null?'err':'ok');
     }
     event.target.value='';
-    toast(`✓ ${imported} importée${imported>1?'s':''}${skipped?` (${skipped} ignorée${skipped>1?'s':''})`:''}`);
+    toast(`${imported} importée${imported>1?'s':''}${skipped?` (${skipped} ignorée${skipped>1?'s':''})`:''}`);
     renderTable();renderMetrics();
   };
   reader.readAsText(file,'UTF-8');
@@ -760,7 +795,10 @@ function renderUserList(){
     <div class="user-item${u.id===currentUserId?' selected':''}" onclick="selectUser('${u.id}')">
       <div class="user-avatar" style="background:${u.color};color:${isDark(u.color)?'#fff':'#111'}">${u.emoji||u.name[0]}</div>
       <div><div class="user-name">${u.name}</div><div class="user-meta">${db.entries.filter(e=>e.userId===u.id).length} entrées</div></div>
-      ${u.id===currentUserId?'<span class="check-mark">✓</span>':''}
+      <div class="user-actions">
+        <button class="btn-edit" onclick="editUser('${u.id}',event)">✎</button>
+        ${u.id===currentUserId?'<span class="check-mark">✓</span>':''}
+      </div>
     </div>`).join('');
 }
 function selectUser(id){
@@ -768,6 +806,58 @@ function selectUser(id){
   updateUserPill();activeFilter='tous';
   document.getElementById('authOverlay').classList.remove('open');
   renderTable();toast('Coucou bebou '+db.users.find(u=>u.id===id).name+' !');
+}
+function editUser(id,event){
+  event.stopPropagation();
+  const user=db.users.find(u=>u.id===id);
+  if(!user)return;
+  editingUserId=id;
+  editingSelectedColor=user.color;
+  document.getElementById('ed_name').value=user.name;
+  document.getElementById('ed_emoji').value=user.emoji||'🍺';
+  document.getElementById('customColorEdit').value=user.color;
+  renderColorRowEdit();
+  document.getElementById('createBtn').style.display='none';
+  document.getElementById('firstDivider').style.display='none';
+  document.getElementById('createForm').classList.remove('show');
+  document.getElementById('editForm').classList.add('show');
+  document.getElementById('authTitle').textContent='Modifier le compte';
+}
+function cancelEdit(){
+  editingUserId=null;editingSelectedColor=null;
+  document.getElementById('editForm').classList.remove('show');
+  document.getElementById('createBtn').style.display='block';
+  document.getElementById('firstDivider').style.display='block';
+  document.getElementById('authTitle').textContent='Comptes';
+}
+function saveUserEdit(){
+  const name=document.getElementById('ed_name').value.trim();
+  if(!name){toast('Entrez un prénom');return;}
+  const emoji=document.getElementById('ed_emoji').value.trim()||'🍺';
+  const user=db.users.find(u=>u.id===editingUserId);
+  if(user){
+    user.name=name;user.emoji=emoji;user.color=editingSelectedColor;
+    saveLocalDB();
+    pushUser(user);
+    if(editingUserId===currentUserId)updateUserPill();
+    renderUserList();
+    cancelEdit();
+    toast('Profil modifié');
+  }
+}
+function deleteUserProfile(){
+  if(!confirm('Êtes-vous sûr de vouloir supprimer ce compte ?'))return;
+  db.users=db.users.filter(u=>u.id!==editingUserId);
+  saveLocalDB();
+  if(editingUserId===currentUserId){
+    currentUserId=db.users[0]?.id||null;
+    localStorage.setItem('boisso_uid',currentUserId);
+    updateUserPill();
+    renderTable();
+  }
+  renderUserList();
+  cancelEdit();
+  toast('Compte supprimé');
 }
 function updateUserPill(){
   const u=db.users.find(x=>x.id===currentUserId)||db.users[0];
@@ -778,16 +868,23 @@ function updateUserPill(){
   document.getElementById('userPillName').textContent=u.name;
 }
 function renderColorRow(){document.getElementById('colorRow').innerHTML=AVATAR_COLORS.map(c=>`<div class="color-dot${c===selectedColor?' selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('');}
-function selectColor(c){selectedColor=c;renderColorRow();}
+function selectColor(c){selectedColor=c;renderColorRow();document.getElementById('customColor').value=c;}
+function renderColorRowEdit(){document.getElementById('colorRowEdit').innerHTML=AVATAR_COLORS.map(c=>`<div class="color-dot${c===editingSelectedColor?' selected':''}" style="background:${c}" onclick="selectColorEdit('${c}')"></div>`).join('');}
+function selectColorEdit(c){editingSelectedColor=c;renderColorRowEdit();document.getElementById('customColorEdit').value=c;}
+function toggleCreateForm(){
+  const form=document.getElementById('createForm');
+  if(form)form.classList.toggle('show');
+}
 async function createUser(){
   const name=document.getElementById('nu_name').value.trim();
-  if(!name){toast('⚠ Entrez un prénom');return;}
+  if(!name){toast('Entrez un prénom');return;}
   const emoji=document.getElementById('nu_emoji').value.trim()||'🍺';
   const user={id:'u'+Date.now(),name,emoji,color:selectedColor};
   db.users.push(user);saveLocalDB();
   await pushUser(user);
   document.getElementById('nu_name').value='';document.getElementById('nu_emoji').value='';
-  renderUserList();toast('✓ Compte créé pour '+name);
+  document.getElementById('createForm').classList.remove('show');
+  renderUserList();toast('Compte créé pour '+name);
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
 
@@ -800,5 +897,8 @@ updateUserPill();
 renderTable();
 syncFromSupabase(false);
 </script>
+
+<footer id="footer">Créé par Louis pour ses copain.e.s</footer>
+
 </body>
 </html>

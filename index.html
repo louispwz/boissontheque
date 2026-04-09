@@ -55,11 +55,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .field textarea{resize:vertical;min-height:65px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* RATING */
-.star-wrap{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
-.star{font-size:19px;cursor:pointer;color:var(--border2);transition:color .15s,transform .1s;user-select:none}
+.star-wrap{display:flex;align-items:center;gap:0;width:100%}
+.star{flex:1;text-align:center;font-size:26px;cursor:pointer;color:var(--border2);transition:color .12s,transform .1s;user-select:none;direction:ltr}
 .star.on{color:var(--accent)}
-.star:active{transform:scale(1.2)}
-.rating-display{margin-left:6px;font-size:14px;font-weight:600;color:var(--accent);min-width:32px}
+.star:active{transform:scale(1.15)}
+.star-wrap:hover .star{color:var(--accent)}
+.star:hover ~ .star{color:var(--border2)}
+.rating-display{font-size:14px;font-weight:600;color:var(--accent);min-width:36px;text-align:center;flex-shrink:0}
 /* LOCATION */
 .loc-row{display:flex;gap:7px}
 .loc-btn{white-space:nowrap;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:border-color .2s,color .2s;flex-shrink:0;font-family:'DM Sans',sans-serif}
@@ -442,8 +444,8 @@ async function pushUser(user) {
 // LOCAL DB
 // ══════════════════════════════════════════
 function loadLocalDB() {
-  try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[{id:'u1',name:'Moi',color:'#d4a843',emoji:'🍺'}],entries:[]}; }
-  catch(e) { return {users:[{id:'u1',name:'Moi',color:'#d4a843',emoji:'🍺'}],entries:[]}; }
+  try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]}; }
+  catch(e) { return {users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]}; }
 }
 function saveLocalDB() { localStorage.setItem('boisso_db',JSON.stringify(db)); }
 

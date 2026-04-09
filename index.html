@@ -178,7 +178,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="tb-row1">
       <div>
         <div class="app-title">Boissonthèque</div>
-        <div class="app-subtitle">Ma cave personnelle</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
         <div class="sync-dot" id="syncDot" title="Statut sync"></div>
@@ -215,19 +214,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
           <select id="f_type">
             <option value="">Choisir…</option>
             <optgroup label="🍺 Bières">
-              <option value="blonde">Blonde</option><option value="blanche">Blanche</option>
-              <option value="brune">Brune</option><option value="ambrée">Ambrée</option>
-              <option value="IPA">IPA</option><option value="ale">Ale</option>
-              <option value="stout">Stout</option><option value="sour">Sour</option><option value="lager">Lager</option>
+              <option value="blonde">Blonde</option>
+              <option value="blanche">Blanche</option>
+              <option value="brune">Brune</option>
+              <option value="ambrée">Ambrée</option>
+              <option value="IPA">IPA</option>
+              <option value="ale">Ale</option>
+              <option value="stout">Stout</option>
+              <option value="sour">Sour</option>
+              <option value="lager">Lager</option>
             </optgroup>
             <optgroup label="🍎 Autres alcools">
-              <option value="cidre">Cidre</option><option value="vin blanc">Vin blanc</option>
-              <option value="vin rouge">Vin rouge</option><option value="rosé">Rosé</option>
-              <option value="pétillant">Pétillant</option><option value="spiritueux">Spiritueux</option>
+              <option value="cidre">Cidre</option>
+              <option value="vin blanc">Vin blanc</option>
+              <option value="vin rouge">Vin rouge</option>
+              <option value="rosé">Rosé</option>
+              <option value="pétillant">Pétillant</option>
+              <option value="spiritueux">Spiritueux</option>
             </optgroup>
             <optgroup label="🥤 Sans alcool">
-              <option value="sirop">Sirop</option><option value="jus">Jus de fruit</option>
-              <option value="sodas">Soda</option><option value="thé">Thé / Infusion</option><option value="autre">Autre</option>
+              <option value="sirop">Sirop</option>
+              <option value="jus">Jus de fruit</option>
+              <option value="sodas">Soda</option>
+              <option value="thé">Thé / Infusion / Café</option>
+              <option value="autre">Autre</option>
             </optgroup>
           </select>
         </div>
@@ -241,18 +251,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         <label>Lieu de dégustation</label>
         <div class="loc-row">
           <input id="f_loc" placeholder="ex: Bar Le Central, Montpellier" style="flex:1"/>
-          <button class="loc-btn" id="locBtn" onclick="getLocation()">📍 GPS</button>
+          <button class="loc-btn" id="locBtn" onclick="getLocation()">GPS</button>
         </div>
         <div class="loc-status" id="locStatus"></div>
       </div>
       <div class="field">
         <label>Note / 10</label>
         <div class="star-wrap" id="starRow">
-          <span class="star" data-v="1" onclick="setRating(1)">★</span><span class="star" data-v="2" onclick="setRating(2)">★</span>
-          <span class="star" data-v="3" onclick="setRating(3)">★</span><span class="star" data-v="4" onclick="setRating(4)">★</span>
-          <span class="star" data-v="5" onclick="setRating(5)">★</span><span class="star" data-v="6" onclick="setRating(6)">★</span>
-          <span class="star" data-v="7" onclick="setRating(7)">★</span><span class="star" data-v="8" onclick="setRating(8)">★</span>
-          <span class="star" data-v="9" onclick="setRating(9)">★</span><span class="star" data-v="10" onclick="setRating(10)">★</span>
+          <span class="star" data-v="1" onclick="setRating(1)">★</span>
+          <span class="star" data-v="2" onclick="setRating(2)">★</span>
+          <span class="star" data-v="3" onclick="setRating(3)">★</span>
+          <span class="star" data-v="4" onclick="setRating(4)">★</span>
+          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+          <span class="star" data-v="6" onclick="setRating(6)">★</span>
+          <span class="star" data-v="7" onclick="setRating(7)">★</span>
+          <span class="star" data-v="8" onclick="setRating(8)">★</span>
+          <span class="star" data-v="9" onclick="setRating(9)">★</span>
+          <span class="star" data-v="10" onclick="setRating(10)">★</span>
           <span class="rating-display" id="ratingVal">—</span>
         </div>
       </div>
@@ -351,13 +366,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 // ══════════════════════════════════════════
 const PALETTES=[
   {id:'whisky',name:'Whisky',accent:'#d4a843',accent2:'#e8c06a',dim:'rgba(212,168,67,0.15)',bg:'#0f0e0b',bg2:'#1a1915',bg3:'#242320',bg4:'#2e2d29',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.14)',text:'#f0ece2',text2:'#9b9688',text3:'#5a5850',swatches:['#d4a843','#e8c06a','#0f0e0b','#1a1915']},
-  {id:'forest',name:'Forêt',accent:'#5aaa6e',accent2:'#7ec98f',dim:'rgba(90,170,110,0.15)',bg:'#0b0f0d',bg2:'#131a15',bg3:'#1c2620',bg4:'#25312a',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e8f0ea',text2:'#8aa08e',text3:'#4a5c50',swatches:['#5aaa6e','#7ec98f','#0b0f0d','#1c2620']},
-  {id:'ocean',name:'Océan',accent:'#4a96d4',accent2:'#72b8f0',dim:'rgba(74,150,212,0.15)',bg:'#080d12',bg2:'#101820',bg3:'#18242e',bg4:'#20303c',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e0eef8',text2:'#7a9ab8',text3:'#405868',swatches:['#4a96d4','#72b8f0','#080d12','#18242e']},
+  {id:'matcha',name:'Matcha',accent:'#5aaa6e',accent2:'#7ec98f',dim:'rgba(90,170,110,0.15)',bg:'#0b0f0d',bg2:'#131a15',bg3:'#1c2620',bg4:'#25312a',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e8f0ea',text2:'#8aa08e',text3:'#4a5c50',swatches:['#5aaa6e','#7ec98f','#0b0f0d','#1c2620']},
+  {id:'water',name:'Aqua',accent:'#4a96d4',accent2:'#72b8f0',dim:'rgba(74,150,212,0.15)',bg:'#080d12',bg2:'#101820',bg3:'#18242e',bg4:'#20303c',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#e0eef8',text2:'#7a9ab8',text3:'#405868',swatches:['#4a96d4','#72b8f0','#080d12','#18242e']},
   {id:'rosé',name:'Rosé',accent:'#d45a8a',accent2:'#e87aaa',dim:'rgba(212,90,138,0.15)',bg:'#110c10',bg2:'#1e1219',bg3:'#291822',bg4:'#33202c',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.13)',text:'#f5e8f0',text2:'#a07888',text3:'#5a4050',swatches:['#d45a8a','#e87aaa','#110c10','#291822']},
   {id:'latte',name:'Latte',accent:'#c08050',accent2:'#daa070',dim:'rgba(192,128,80,0.15)',bg:'#0e0c0a',bg2:'#1c1814',bg3:'#28231e',bg4:'#342e28',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#f2ece4',text2:'#a09080',text3:'#5c5048',swatches:['#c08050','#daa070','#0e0c0a','#28231e']},
-  {id:'neon',name:'Néon',accent:'#50e0c0',accent2:'#80f0d8',dim:'rgba(80,224,192,0.12)',bg:'#080a0c',bg2:'#10161c',bg3:'#182028',bg4:'#202c36',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#ddf4f0',text2:'#70a098',text3:'#385850',swatches:['#50e0c0','#80f0d8','#080a0c','#182028']},
-  {id:'chalk',name:'Craie',accent:'#404040',accent2:'#606060',dim:'rgba(64,64,64,0.12)',bg:'#f5f2ee',bg2:'#ede9e2',bg3:'#e2ddd5',bg4:'#d8d2c8',border:'rgba(0,0,0,0.08)',border2:'rgba(0,0,0,0.14)',text:'#1a1816',text2:'#6a6460',text3:'#a09890',swatches:['#404040','#606060','#f5f2ee','#e2ddd5']},
-  {id:'grape',name:'Raisin',accent:'#9a60d4',accent2:'#b888f0',dim:'rgba(154,96,212,0.15)',bg:'#0c0810',bg2:'#14101c',bg3:'#1e1828',bg4:'#282034',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.13)',text:'#f0e8f8',text2:'#9078a8',text3:'#504060',swatches:['#9a60d4','#b888f0','#0c0810','#1e1828']},
+  {id:'blue_lagoon',name:'Blue Lagoon',accent:'#50e0c0',accent2:'#80f0d8',dim:'rgba(80,224,192,0.12)',bg:'#080a0c',bg2:'#10161c',bg3:'#182028',bg4:'#202c36',border:'rgba(255,255,255,0.07)',border2:'rgba(255,255,255,0.12)',text:'#ddf4f0',text2:'#70a098',text3:'#385850',swatches:['#50e0c0','#80f0d8','#080a0c','#182028']},
+  {id:'lait',name:'Lait',accent:'#404040',accent2:'#606060',dim:'rgba(64,64,64,0.12)',bg:'#f5f2ee',bg2:'#ede9e2',bg3:'#e2ddd5',bg4:'#d8d2c8',border:'rgba(0,0,0,0.08)',border2:'rgba(0,0,0,0.14)',text:'#1a1816',text2:'#6a6460',text3:'#a09890',swatches:['#404040','#606060','#f5f2ee','#e2ddd5']},
+  {id:'vin',name:'Vin',accent:'#9a60d4',accent2:'#b888f0',dim:'rgba(154,96,212,0.15)',bg:'#0c0810',bg2:'#14101c',bg3:'#1e1828',bg4:'#282034',border:'rgba(255,255,255,0.08)',border2:'rgba(255,255,255,0.13)',text:'#f0e8f8',text2:'#9078a8',text3:'#504060',swatches:['#9a60d4','#b888f0','#0c0810','#1e1828']},
 ];
 
 const AVATAR_COLORS=['#d4a843','#4a8c5c','#3a6da8','#993556','#c45a3a','#7c5cbf','#2a9d8f','#e07b39'];
@@ -406,7 +421,7 @@ async function syncFromSupabase(showToast=false) {
   }
   saveLocalDB();
   setSyncDot('ok');
-  if(showToast) toast('✓ Données synchronisées !');
+  if(showToast) toast("Données synchronisées');
   renderTable(); updateUserPill();
 }
 
@@ -415,7 +430,7 @@ async function pushEntry(entry) {
   setSyncDot('loading');
   const row={id:entry.id,user_id:entry.userId,name:entry.name,brewery:entry.brewery||null,type:entry.type,abv:entry.abv||null,price:entry.price||null,notes:entry.notes||null,location:entry.location||null,coords:entry.coords||null,rating:entry.rating||null,date:entry.date};
   const res = await supaFetch('entries?on_conflict=id','POST',[row]);
-  if(res===null) { setSyncDot('err'); toast('⚠ Sync échouée, données sauvées localement'); }
+  if(res===null) { setSyncDot('err'); toast('Synchronisation échouée'); }
   else setSyncDot('ok');
 }
 

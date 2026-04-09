@@ -445,7 +445,7 @@ async function pushUser(user) {
 // ══════════════════════════════════════════
 function loadLocalDB() {
   try { return JSON.parse(localStorage.getItem('boisso_db'))||{users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]}; }
-  catch(e) { return {users:[{id:'u1',name:'Louis',color:'#4a8c5c',emoji:'🦕'}],entries:[]}; }
+  catch(e) { return {users:[],entries:[]}; }
 }
 function saveLocalDB() { localStorage.setItem('boisso_db',JSON.stringify(db)); }
 
@@ -528,6 +528,11 @@ function getLocation(){
 }
 function uid(){return 'e'+Date.now()+Math.random().toString(36).slice(2,5);}
 async function saveEntry(){
+  if (db.users.length === 0) {
+    toast('⚠ Créez un compte d’abord !');
+    openAuth();
+    return;
+  }
   const name=document.getElementById('f_name').value.trim();
   const type=document.getElementById('f_type').value;
   if(!name||!type){toast('⚠ Nom et type obligatoires');return;}

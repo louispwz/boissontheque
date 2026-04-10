@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Boissonthèque</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Boldunse:wght@300;400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -15,14 +15,14 @@
   --red:#c45a3a;--green:#4a8c5c;--radius:12px;--radius-sm:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;background:var(--bg)}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:auto}
+#app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;position:relative;background:var(--bg)}
 #topbar{padding:14px 14px 0;flex-shrink:0}
 #tabs{display:flex;gap:2px;padding:0 14px;margin-top:10px;border-bottom:1px solid var(--border);flex-shrink:0}
 .tab-btn{flex:1;padding:9px 4px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;text-transform:uppercase;transition:color .2s,border-color .2s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 #panels{flex:1;overflow:hidden;position:relative}
-.panel{position:absolute;inset:0;overflow-y:auto;padding:14px 14px 70px 14px;display:none}
+.panel{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(110px + env(safe-area-inset-bottom)) 14px;display:none}
 .panel.active{display:block}
 .panel::-webkit-scrollbar{width:3px}
 .panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
@@ -178,15 +178,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #csvInput{display:none}
-/* PODCAST */
+/* CAT MODE */
+#catLayer{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.cat-sprite{position:absolute;width:64px;height:64px;pointer-events:none;will-change:transform;image-rendering:pixelated}
+.cat-meow{position:fixed;pointer-events:none;font-size:13px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);border-radius:12px;padding:4px 10px;z-index:10000;animation:meow-float 1.8s ease-out forwards}
+@keyframes meow-float{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+.cat-cursor{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E🐾%3C/text%3E%3C/svg%3E") 8 8,auto}
+body.cat-active .cat-cursor-wrap{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ctext y='26' font-size='26'%3E🐾%3C/text%3E%3C/svg%3E") 8 8,auto}
+body.cat-active{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ctext y='26' font-size='26'%3E🐾%3C/text%3E%3C/svg%3E") 8 8,auto}
+@keyframes catBannerAnim{0%{background-position:0% 0%}100%{background-position:200% 0%}}
 .podcast-question{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
 .podcast-question-text{flex:1;font-size:14px;line-height:1.4}
 .podcast-question-delete{color:var(--red);font-size:16px;padding:2px;cursor:pointer}
 /* FOOTER */
-#footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px;text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
+#footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
 </style>
 </head>
 <body>
+<div id="catLayer"></div>
 <div id="app">
   <div id="topbar">
     <div class="tb-row1">
@@ -259,9 +268,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         <div class="field"><label>Degré (%)</label><input id="f_abv" type="number" step="0.1" min="0" max="100" placeholder=""/></div>
         <div class="field"><label>Prix / 50cl (€)</label><input id="f_price" type="number" step="0.10" min="0" placeholder=""/></div>
       </div>
-      <div class="field"><label>Notes de dégustation</label><textarea id="f_notes" placeholder="Spécificités à rajouter"></textarea></div>
+      <div class="field"><label>Notes additionnelles</label><textarea id="f_notes" placeholder="Spécificités à rajouter"></textarea></div>
       <div class="field">
-        <label>Lieu de dégustation</label>
+        <label>Lieu</label>
         <div class="loc-row">
           <input id="f_loc" placeholder="ex: Bar Le Central, Montpellier" style="flex:1"/>
           <button class="loc-btn" id="locBtn" onclick="getLocation()">GPS</button>
@@ -345,10 +354,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="sheet-title" id="authTitle">Comptes</div>
     <div class="user-list" id="userList"></div>
     <div class="divider" id="firstDivider"></div>
-    <div style="margin-bottom:12px">
+    <div style="margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
         <input type="checkbox" id="podcastMode" onchange="togglePodcastMode()" style="width:16px;height:16px">
         <span>Mode Podcast</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+        <input type="checkbox" id="catMode" onchange="toggleCatMode()" style="width:16px;height:16px">
+        <span>Mode Chat</span>
       </label>
     </div>
     <button class="btn-ghost" id="createBtn" onclick="toggleCreateForm()" style="width:100%;margin-bottom:8px">+ Créer un compte</button>
@@ -974,6 +987,7 @@ function openAuth(){
   renderUserList();
   renderColorRow();
   document.getElementById('podcastMode').checked = podcastMode;
+  document.getElementById('catMode').checked = catMode;
   document.getElementById('authOverlay').classList.add('open');
 }
 function closeAuth(e){if(!e||e.target===document.getElementById('authOverlay'))document.getElementById('authOverlay').classList.remove('open');}
@@ -1076,20 +1090,223 @@ async function createUser(){
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
 
+const FOOTER_MESSAGES=[
+  "Woaw ! C'est le soleil ou ta divine personne qui brille ?",
+  "J'espère que tu passes une super journée ! Bisous !",
+  'Sacrée collection mon cochon',
+  "T’es le genre de personne qui rend mes journées plus belles",
+  "Prédiction du jour : 像河流相信自己的水一样，相信你自己",
+  "Euh toi si t'etais une bière tu serais une bière délicieuse",
+  "N'oublie pas de dire s'il te plait et merci",
+  "Tiens ? et si tu disais à quelqu'un que tu l'aimes aujourd'hui ?",
+  "Radieuse journée non ?",
+  "Il faut que je te le dise... t'es vraiment formidable",
+  "Je crois que l’univers t’aime bien, ça se voit",
+  "Miaou miaou miaou, miaouu miaou miaouuuu",
+  "Un petit cocktail de joie et de bonheur pour vous ?"
+];
+
+function setRandomFooter(){
+  const footer=document.getElementById('footer');
+  if(!footer)return;
+  footer.textContent=FOOTER_MESSAGES[Math.floor(Math.random()*FOOTER_MESSAGES.length)];
+}
+
+function setupReturnSync(){
+  let wasHidden = document.visibilityState !== 'visible';
+  let lastSync = Date.now();
+
+  const syncIfVisible = async () => {
+    if(document.visibilityState === 'visible' && Date.now() - lastSync > 5000){
+      lastSync = Date.now();
+      await syncFromSupabase(false);
+    }
+  };
+
+  document.addEventListener('visibilitychange', async () => {
+    if(wasHidden && document.visibilityState === 'visible') await syncIfVisible();
+    wasHidden = document.visibilityState !== 'visible';
+  });
+
+  window.addEventListener('focus', syncIfVisible);
+}
+
 // ══════════════════════════════════════════
-// INIT
+// CAT MODE 
 // ══════════════════════════════════════════
+let catMode = localStorage.getItem('boisso_cat') === 'true';
+let catInterval = null;
+let catClickHandler = null;
+let catPawTrail = [];
+
+
+const CAT_IMAGES = [
+  'src/cat1.png','src/cat2.png','src/cat3.png','src/cat4.png','src/cat5.png'
+];
+
+const MEOWS = ['Miaou !','Purrrr...','Mrrrow !','Miaou miaou !','*ronronne*','Nyan !','Prrrrt !','Miaaaaou !','...miaou','mrrf !'];
+
+function catEmojiSvg(emoji){
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52' text-anchor='middle' x='32'%3E${encodeURIComponent(emoji)}%3C/text%3E%3C/svg%3E`;
+}
+
+const CAT_EMOJIS = ['🐱','🐈','🐈‍⬛','😺','😸'];
+
+function spawnCat(){
+  const layer = document.getElementById('catLayer');
+  if(!layer) return;
+
+  const cat = document.createElement('img');
+  cat.className = 'cat-sprite';
+
+  // Try a real image first, fallback to emoji SVG
+  const useEmoji = Math.random() < 0.5;
+  if(useEmoji){
+    const emoji = CAT_EMOJIS[Math.floor(Math.random()*CAT_EMOJIS.length)];
+    cat.src = catEmojiSvg(emoji);
+  } else {
+    const imgSrc = CAT_IMAGES[Math.floor(Math.random()*CAT_IMAGES.length)];
+    cat.src = imgSrc;
+    cat.onerror = () => {
+      const emoji = CAT_EMOJIS[Math.floor(Math.random()*CAT_EMOJIS.length)];
+      cat.src = catEmojiSvg(emoji);
+    };
+  }
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const size = 48 + Math.random() * 40;
+  cat.style.width = size + 'px';
+  cat.style.height = size + 'px';
+
+  // Random entry: left or right side
+  const fromLeft = Math.random() < 0.5;
+  const startX = fromLeft ? -size : w + size;
+  const startY = Math.random() * (h * 0.75) + h * 0.05;
+  const endX = fromLeft ? w + size * 2 : -size * 2;
+  const endY = startY + (Math.random() - 0.5) * 200;
+
+  // Speed variation
+  const duration = 2000 + Math.random() * 3000;
+  const spinDir = fromLeft ? 1 : -1;
+  const spins = (1 + Math.random() * 2) * spinDir;
+  const bounceHeight = -(50 + Math.random() * 120);
+
+  cat.style.left = startX + 'px';
+  cat.style.top = startY + 'px';
+  cat.style.transform = `scaleX(${fromLeft ? 1 : -1})`;
+
+  layer.appendChild(cat);
+
+  const start = performance.now();
+  function animate(now){
+    if(!catMode){ cat.remove(); return; }
+    const t = Math.min((now - start) / duration, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out quad
+    const x = startX + (endX - startX) * ease;
+    // Parabolic arc upward
+    const arc = Math.sin(t * Math.PI) * bounceHeight;
+    const y = startY + (endY - startY) * t + arc;
+    const rotation = 360 * spins * t;
+    cat.style.left = x + 'px';
+    cat.style.top = y + 'px';
+    cat.style.transform = `scaleX(${fromLeft?1:-1}) rotate(${rotation}deg)`;
+    if(t < 1) requestAnimationFrame(animate);
+    else cat.remove();
+  }
+  requestAnimationFrame(animate);
+
+  // Occasionally show a meow bubble
+  if(Math.random() < 0.1){
+    setTimeout(() => {
+      if(!catMode) return;
+      const bubble = document.createElement('div');
+      bubble.className = 'cat-meow';
+      bubble.textContent = MEOWS[Math.floor(Math.random()*MEOWS.length)];
+      bubble.style.left = (startX + (endX - startX) * 0.3) + 'px';
+      bubble.style.top = (startY - 20) + 'px';
+      document.body.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 1900);
+    }, duration * 0.3);
+  }
+}
+
+function spawnPawPrint(x, y){
+  const paw = document.createElement('div');
+  paw.style.cssText = `position:fixed;left:${x-12}px;top:${y-12}px;font-size:22px;pointer-events:none;z-index:9997;opacity:.7;transition:opacity 1.5s;transform:rotate(${Math.random()*60-30}deg)`;
+  paw.textContent = '🐾';
+  document.body.appendChild(paw);
+  catPawTrail.push(paw);
+  setTimeout(() => { paw.style.opacity = '0'; }, 100);
+  setTimeout(() => { paw.remove(); catPawTrail = catPawTrail.filter(p=>p!==paw); }, 1700);
+}
+
+function startCatMode(){
+  document.body.classList.add('cat-active');
+
+  // Spawn cats periodically
+  spawnCat();
+  catInterval = setInterval(() => {
+    if(!catMode){ stopCatMode(); return; }
+    // Spawn 1-3 cats at once sometimes
+    const n = Math.random() < 0.2 ? Math.floor(Math.random()*2)+2 : 1;
+    for(let i=0;i<n;i++) setTimeout(spawnCat, i*300);
+  }, 1800);
+
+  // Paw prints on click/touch
+  catClickHandler = (e) => {
+    if(!catMode) return;
+    const x = e.clientX || (e.touches&&e.touches[0]?.clientX);
+    const y = e.clientY || (e.touches&&e.touches[0]?.clientY);
+    if(x !== undefined) spawnPawPrint(x, y);
+    // Occasionally spawn a cat from click position
+    if(Math.random() < 0.15) spawnCat();
+  };
+  document.addEventListener('click', catClickHandler);
+  document.addEventListener('touchstart', catClickHandler, {passive:true});
+
+  toast('Miaou miaou');
+}
+
+function stopCatMode(){
+  document.body.classList.remove('cat-active');
+  if(catInterval){ clearInterval(catInterval); catInterval = null; }
+  if(catClickHandler){
+    document.removeEventListener('click', catClickHandler);
+    document.removeEventListener('touchstart', catClickHandler);
+    catClickHandler = null;
+  }
+  // Remove all cats and paws
+  document.getElementById('catLayer').innerHTML = '';
+  catPawTrail.forEach(p => p.remove());
+  catPawTrail = [];
+  document.querySelectorAll('.cat-meow').forEach(b=>b.remove());
+  toast('plus de chat...');
+}
+
+function toggleCatMode(){
+  catMode = document.getElementById('catMode').checked;
+  localStorage.setItem('boisso_cat', catMode);
+  if(catMode) startCatMode();
+  else stopCatMode();
+}
+
+
 applyPalette(currentPaletteId);
 setView(viewMode);
 updateUserPill();
 updatePodcastTabVisibility();
 document.getElementById('podcastMode').checked = podcastMode;
+document.getElementById('catMode').checked = catMode;
 if(podcastMode) loadPodcastQuestions();
+if(catMode) startCatMode();
 renderTable();
 syncFromSupabase(false);
+setupReturnSync();
 </script>
 
-<footer id="footer">Créé par Louis pour ses copain.e.s</footer>
+<footer id="footer"></footer>
+<script>setRandomFooter();</script>
 
 </body>
 </html>

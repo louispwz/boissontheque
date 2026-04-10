@@ -6,8 +6,11 @@
 <title>Boissonthèque</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Boldonse:wght@300;400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-
-<style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script><style>
 :root {
   --bg:#0f0e0b;--bg2:#1a1915;--bg3:#242320;--bg4:#2e2d29;
   --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
@@ -196,6 +199,19 @@ body.cat-active{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2
 .user-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .15s;user-select:none;-webkit-user-select:none;touch-action:manipulation;white-space:nowrap}
 .user-chip.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 .user-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* SUBTABS */
+.subtab-row{display:flex;gap:6px;margin-bottom:12px}
+.subtab-btn{flex:1;padding:7px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center;user-select:none;touch-action:manipulation}
+.subtab-btn.active{background:var(--accent-dim);border-color:rgba(212,168,67,.4);color:var(--accent)}
+/* MAP */
+#mapContainer{width:100%;height:calc(100vh - 230px);min-height:300px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.map-empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;line-height:1.7}
+.leaflet-popup-content-wrapper{background:var(--bg3)!important;color:var(--text)!important;border:1px solid var(--border2)!important;border-radius:10px!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important}
+.leaflet-popup-tip{background:var(--bg3)!important}
+.leaflet-popup-content{margin:10px 13px!important;font-family:'DM Sans',sans-serif!important}
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(212,168,67,.25)!important}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:rgba(212,168,67,.7)!important;color:#1a1410!important;font-family:'DM Sans',sans-serif!important;font-weight:700!important;font-size:13px!important}
+
 
 #footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
 </style>
@@ -307,8 +323,17 @@ body.cat-active{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2
 
     <!-- PANEL TABLE -->
     <div class="panel" id="panel1">
-      <div class="filters" id="filterChips"></div>
-      <div id="drinkList"></div>
+      <div class="subtab-row">
+        <button class="subtab-btn active" id="subtab-list" onclick="setSubTab('list')">📋 Liste</button>
+        <button class="subtab-btn" id="subtab-map" onclick="setSubTab('map')">🗺 Carte</button>
+      </div>
+      <div id="tableListView">
+        <div class="filters" id="filterChips"></div>
+        <div id="drinkList"></div>
+      </div>
+      <div id="tableMapView" style="display:none">
+        <div id="mapContainer"></div>
+      </div>
     </div>
 
     <!-- PANEL METRICS -->
@@ -527,7 +552,9 @@ let currentRating=0,editId=null,activeFilter='tous',deleteId=null,deleteType='en
 let tlTab='count',tlChartInstance=null;
 let podcastMode=localStorage.getItem('boisso_podcast')==='true';
 let podcastQuestions = [];
-let selectedMetricUsers = null; // null = tous
+let selectedMetricUsers = null;
+let currentSubTab='list';
+let leafletMap=null,leafletMarkers=[];
 
 // ══════════════════════════════════════════
 // PALETTE
@@ -571,7 +598,7 @@ function setView(v){
 function switchTab(i){
   document.querySelectorAll('.tab-btn').forEach((t,j)=>t.classList.toggle('active',i===j));
   document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
-  if(i===1)renderTable();
+  if(i===1){ if(currentSubTab==='map') renderMap(); else renderTable(); }
   if(i===2)renderMetrics();
   if(i===3)renderPodcast();
 }
@@ -720,15 +747,38 @@ function getLocation(){
     locCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
     btn.textContent='✓ GPS';btn.className='loc-btn has-loc';
     try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${locCoords.lat}&lon=${locCoords.lng}&format=json`);
+      // 1. Chercher bars/cafés/restos dans un rayon de 80m via Overpass API
+      const {lat,lng}=locCoords;
+      const q=`[out:json][timeout:6];(node["amenity"~"^(bar|pub|cafe|restaurant|biergarten|nightclub|brewery)$"](around:80,${lat},${lng}););out 8;`;
+      let placeName='',otherPlaces=[];
+      try{
+        const op=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q});
+        const od=await op.json();
+        if(od.elements?.length){
+          // Trier par distance
+          const sorted=od.elements
+            .filter(el=>el.tags?.name)
+            .map(el=>({...el,dist:Math.hypot(el.lat-lat,el.lon-lng)}))
+            .sort((a,b)=>a.dist-b.dist);
+          if(sorted.length){
+            placeName=sorted[0].tags.name;
+            otherPlaces=sorted.slice(1,3).map(el=>el.tags.name);
+          }
+        }
+      }catch(_){}
+      // 2. Reverse geocode Nominatim pour la ville
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18`);
       const d=await r.json();
-      const place=d.address.cafe||d.address.bar||d.address.restaurant||d.address.road||'';
-      const city=d.address.city||d.address.town||d.address.village||'';
-      const suggestion=[place,city].filter(Boolean).join(', ');
+      // Fallback Nominatim si Overpass n'a rien trouvé
+      if(!placeName) placeName=d.address?.bar||d.address?.pub||d.address?.cafe||d.address?.restaurant||d.address?.amenity||'';
+      const city=d.address?.city||d.address?.town||d.address?.village||d.address?.suburb||'';
+      const suggestion=[placeName,city].filter(Boolean).join(', ');
       if(suggestion&&!document.getElementById('f_loc').value) document.getElementById('f_loc').value=suggestion;
-      status.textContent='📍 '+(d.display_name||'Position enregistrée').slice(0,60);
-    }catch(e){status.textContent=`📍 ${locCoords.lat.toFixed(4)}, ${locCoords.lng.toFixed(4)}`;}
-  },_=>{status.textContent='Impossible de localiser';btn.textContent='GPS';},{timeout:10000,enableHighAccuracy:true});
+      let statusText='📍 '+(suggestion||(d.display_name||'Position enregistrée').slice(0,50));
+      if(otherPlaces.length) statusText+=` · Aussi: ${otherPlaces.join(', ')}`;
+      status.textContent=statusText;
+    }catch(e){status.textContent=`📍 ${locCoords.lat.toFixed(5)}, ${locCoords.lng.toFixed(5)}`;}
+  },_=>{status.textContent='Impossible de localiser';btn.textContent='GPS';},{timeout:12000,enableHighAccuracy:true,maximumAge:0});
 }
 function uid(){return 'e'+Date.now()+Math.random().toString(36).slice(2,5);}
 async function saveEntry(){
@@ -863,6 +913,102 @@ function renderTable(){
   document.getElementById('drinkList').innerHTML=html;
 }
 function setFilter(t){activeFilter=t;renderTable();}
+
+// ══════════════════════════════════════════
+// SUBTAB & MAP
+// ══════════════════════════════════════════
+function setSubTab(tab){
+  currentSubTab=tab;
+  document.getElementById('subtab-list').classList.toggle('active',tab==='list');
+  document.getElementById('subtab-map').classList.toggle('active',tab==='map');
+  document.getElementById('tableListView').style.display=tab==='list'?'block':'none';
+  document.getElementById('tableMapView').style.display=tab==='map'?'block':'none';
+  if(tab==='list') renderTable();
+  if(tab==='map') renderMap();
+}
+
+function renderMap(){
+  const entries=visibleEntries().filter(e=>e.coords?.lat&&e.coords?.lng);
+  const container=document.getElementById('mapContainer');
+  if(!entries.length){
+    if(leafletMap){leafletMap.remove();leafletMap=null;}
+    container.innerHTML='<div class="map-empty">🗺️ Aucune boisson avec position GPS.<br><small>Utilise le bouton GPS lors de l\'ajout !</small></div>';
+    return;
+  }
+  container.innerHTML='';
+  if(leafletMap){leafletMap.remove();leafletMap=null;}
+  leafletMarkers=[];
+  leafletMap=L.map('mapContainer',{zoomControl:true,attributionControl:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(leafletMap);
+
+  // Cluster group
+  const cluster=L.markerClusterGroup({
+    maxClusterRadius:40,
+    spiderfyOnMaxZoom:true,
+    showCoverageOnHover:false,
+    zoomToBoundsOnClick:true
+  });
+
+  // Grouper les entrées par coordonnées exactes
+  const groups={};
+  entries.forEach(e=>{
+    const key=`${e.coords.lat.toFixed(6)},${e.coords.lng.toFixed(6)}`;
+    if(!groups[key]) groups[key]={lat:e.coords.lat,lng:e.coords.lng,entries:[]};
+    groups[key].entries.push(e);
+  });
+
+  Object.values(groups).forEach(({lat,lng,entries:group})=>{
+    // Couleur dominante = premier utilisateur du groupe
+    const u0=db.users.find(x=>x.id===group[0].userId)||{name:'?',color:'#d4a843',emoji:'🍺'};
+
+    const icon=L.divIcon({
+      html:`<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${u0.color};border:3px solid rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center">
+        <span style="transform:rotate(45deg);font-size:${group.length>1?'11':'14'}px;font-weight:700;line-height:1;color:#fff">
+          ${group.length>1?group.length:(TYPE_ICONS[group[0].type]||'🔮')}
+        </span></div>`,
+      className:'',iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-34]
+    });
+
+    // Popup : liste toutes les boissons à cet endroit
+    let popupHtml='';
+    if(group.length===1){
+      const e=group[0];
+      const u=db.users.find(x=>x.id===e.userId)||{name:'?',color:'#d4a843',emoji:'🍺'};
+      popupHtml=`<div class="map-pop-name">${e.name}${e.rating>=9?' ⭐':''}</div>
+        <div class="map-pop-meta" style="color:${u.color}">${u.emoji||''} ${u.name}</div>
+        <div class="map-pop-meta">${TYPE_ICONS[e.type]||''} ${e.type}${e.brewery?' · '+e.brewery:''}</div>
+        ${e.rating?`<div class="map-pop-meta" style="color:var(--accent)">★ ${e.rating}/10</div>`:''}
+        ${e.location?`<div class="map-pop-meta">📍 ${e.location}</div>`:''}
+        <div class="map-pop-meta">${e.date}</div>`;
+    } else {
+      // Plusieurs boissons au même endroit
+      const loc=group[0].location||`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      popupHtml=`<div class="map-pop-name">📍 ${loc}</div>
+        <div class="map-pop-meta" style="margin-bottom:6px;color:var(--text2)">${group.length} boissons ici</div>
+        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:6px">
+        ${group.map(e=>{
+          const u=db.users.find(x=>x.id===e.userId)||{name:'?',color:'#d4a843',emoji:'🍺'};
+          return `<div style="margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.07)">
+            <div style="font-weight:600;font-size:13px">${TYPE_ICONS[e.type]||''} ${e.name}${e.rating>=9?' ⭐':''}</div>
+            <div style="font-size:11px;color:${u.color};margin-top:1px">${u.emoji||''} ${u.name}${e.rating?' · ★ '+e.rating+'/10':''}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">${e.date}</div>
+          </div>`;
+        }).join('')}
+        </div>`;
+    }
+
+    const m=L.marker([lat,lng],{icon}).bindPopup(popupHtml,{maxWidth:240,maxHeight:320});
+    cluster.addLayer(m);
+    leafletMarkers.push(m);
+  });
+
+  leafletMap.addLayer(cluster);
+
+  const bounds=entries.map(e=>[e.coords.lat,e.coords.lng]);
+  if(bounds.length===1) leafletMap.setView(bounds[0],16);
+  else leafletMap.fitBounds(bounds,{padding:[40,40]});
+  setTimeout(()=>leafletMap.invalidateSize(),150);
+}
 
 // ══════════════════════════════════════════
 // TIMELINE

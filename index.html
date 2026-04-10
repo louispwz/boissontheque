@@ -1112,24 +1112,7 @@ function setRandomFooter(){
   footer.textContent=FOOTER_MESSAGES[Math.floor(Math.random()*FOOTER_MESSAGES.length)];
 }
 
-function setupReturnSync(){
-  let wasHidden = document.visibilityState !== 'visible';
-  let lastSync = Date.now();
 
-  const syncIfVisible = async () => {
-    if(document.visibilityState === 'visible' && Date.now() - lastSync > 5000){
-      lastSync = Date.now();
-      await syncFromSupabase(false);
-    }
-  };
-
-  document.addEventListener('visibilitychange', async () => {
-    if(wasHidden && document.visibilityState === 'visible') await syncIfVisible();
-    wasHidden = document.visibilityState !== 'visible';
-  });
-
-  window.addEventListener('focus', syncIfVisible);
-}
 
 // ══════════════════════════════════════════
 // CAT MODE 
@@ -1301,8 +1284,7 @@ document.getElementById('catMode').checked = catMode;
 if(podcastMode) loadPodcastQuestions();
 if(catMode) startCatMode();
 renderTable();
-syncFromSupabase(false);
-setupReturnSync();
+setTimeout(() => syncFromSupabase(false), 500);
 </script>
 
 <footer id="footer"></footer>

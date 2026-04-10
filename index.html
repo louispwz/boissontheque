@@ -6,6 +6,7 @@
 <title>Boissonthèque</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=Boldonse:wght@300;400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
 <style>
 :root {
   --bg:#0f0e0b;--bg2:#1a1915;--bg3:#242320;--bg4:#2e2d29;
@@ -190,7 +191,12 @@ body.cat-active{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2
 .podcast-question{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
 .podcast-question-text{flex:1;font-size:14px;line-height:1.4}
 .podcast-question-delete{color:var(--red);font-size:16px;padding:2px;cursor:pointer}
-/* FOOTER */
+/* METRICS USER FILTER */
+.user-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.user-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .15s;user-select:none;-webkit-user-select:none;touch-action:manipulation;white-space:nowrap}
+.user-chip.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.user-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
 #footer{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 14px calc(12px + env(safe-area-inset-bottom));text-align:center;font-size:11px;color:var(--text3);max-width:480px;margin:0 auto;width:100%}
 </style>
 </head>
@@ -313,9 +319,10 @@ body.cat-active{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2
         <button class="btn-ghost" onclick="syncFromSupabase(true)" style="padding:8px 12px">↻</button>
       </div>
       <input type="file" id="csvInput" accept=".csv" onchange="importCSV(event)"/>
+      <div class="user-filter-row" id="metricsUserFilter"></div>
       <div class="metric-grid" id="metricGrid"></div>
       <div class="chart-section">
-        <div class="chart-title">Timeline</div>
+        <div class="chart-title">Graphiques</div>
         <div class="tl-tabs">
           <button class="tl-tab active" onclick="setTlTab('count')">Nb / mois</button>
           <button class="tl-tab" onclick="setTlTab('types')">Types</button>
@@ -520,6 +527,7 @@ let currentRating=0,editId=null,activeFilter='tous',deleteId=null,deleteType='en
 let tlTab='count',tlChartInstance=null;
 let podcastMode=localStorage.getItem('boisso_podcast')==='true';
 let podcastQuestions = [];
+let selectedMetricUsers = null; // null = tous
 
 // ══════════════════════════════════════════
 // PALETTE
@@ -553,7 +561,12 @@ function setView(v){
   viewMode=v;localStorage.setItem('boisso_view',v);
   document.getElementById('vt-all').classList.toggle('active',v==='all');
   document.getElementById('vt-self').classList.toggle('active',v==='self');
-  activeFilter='tous';renderTable();
+  activeFilter='tous';
+  // Reset metrics user filter when view changes
+  selectedMetricUsers=null;
+  renderTable();
+  // If metrics tab is active, refresh it too
+  if(document.getElementById('panel2').classList.contains('active')) renderMetrics();
 }
 function switchTab(i){
   document.querySelectorAll('.tab-btn').forEach((t,j)=>t.classList.toggle('active',i===j));
@@ -842,8 +855,8 @@ function renderTable(){
       ${e.notes?`<div class="dc-note">"${e.notes}"</div>`:''}
       <div class="dc-stars">${stars}<span class="dc-rating-val">${e.rating?e.rating+'/10':'—'}</span></div>
       ${canEdit?`<div class="dc-actions">
-        <button class="btn-ghost btn-sm" onclick="editEntry('${e.id}')">✏ Modifier</button>
-        <button class="btn-danger btn-sm" onclick="askDelete('${e.id}')">🗑 Supprimer</button>
+        <button class="btn-ghost btn-sm" onclick="editEntry('${e.id}')">Modifier</button>
+        <button class="btn-danger btn-sm" onclick="askDelete('${e.id}')">Supprimer</button>
       </div>`:''}
     </div>`;
   });
@@ -860,70 +873,236 @@ function setTlTab(tab){
     const txt=b.textContent.toLowerCase();
     b.classList.toggle('active',(tab==='count'&&txt.includes('nb'))||(tab==='types'&&txt.includes('type'))||(tab==='rating'&&txt.includes('note')));
   });
-  renderTimeline(visibleEntries());
+  const entries = metricsEntries();
+  const users = viewMode==='self'
+    ? db.users.filter(u=>u.id===currentUserId)
+    : db.users;
+  const activeUsers = selectedMetricUsers ? users.filter(u=>selectedMetricUsers.has(u.id)) : users;
+  renderTimeline(entries, activeUsers);
 }
-function renderTimeline(entries){
+function renderTimeline(entries, activeUsers){
   if(tlChartInstance){tlChartInstance.destroy();tlChartInstance=null;}
   if(!entries.length)return;
+
+  const p=PALETTES.find(x=>x.id===currentPaletteId)||PALETTES;
+  const ctx=document.getElementById('tlChart').getContext('2d');
+  const users = activeUsers || db.users;
+  const multiUser = users.length > 1;
+
+  // Préparation des mois pour les modes temporels (count et rating)
   const monthSet=new Set(entries.map(e=>e.date?.slice(0,7)).filter(Boolean));
   const months=[...monthSet].sort();
-  if(!months.length)return;
-  const p=PALETTES.find(x=>x.id===currentPaletteId)||PALETTES[0];
-  const ctx=document.getElementById('tlChart').getContext('2d');
-  const labels=months.map(m=>{const[y,mo]=m.split('-');const names=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];return names[+mo-1]+' '+y.slice(2);});
+  const timeLabels=months.map(m=>{
+    const[y,mo]=m.split('-');
+    const names=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    return names[+mo-1]+' '+y.slice(2);
+  });
+
   let chartCfg;
+
   if(tlTab==='count'){
-    const data=months.map(m=>entries.filter(e=>e.date?.startsWith(m)).length);
-    chartCfg={type:'bar',data:{labels,datasets:[{label:'Boissons',data,backgroundColor:p.accent+'99',borderColor:p.accent,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:p.text3,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:p.text3,font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.06)'}}}}};
-  }else if(tlTab==='types'){
-    const allTypes=[...new Set(entries.map(e=>e.type))].slice(0,6);
-    const palette=[p.accent,p.accent2,AVATAR_COLORS[2],AVATAR_COLORS[4],AVATAR_COLORS[1],AVATAR_COLORS[5]];
-    const datasets=allTypes.map((t,i)=>({label:(TYPE_ICONS[t]||'')+' '+t,data:months.map(m=>entries.filter(e=>e.date?.startsWith(m)&&e.type===t).length),backgroundColor:palette[i%palette.length]+'bb',borderColor:palette[i%palette.length],borderWidth:1,borderRadius:3,stack:'s'}));
-    chartCfg={type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:p.text2,font:{size:10},boxWidth:10,padding:8}}},scales:{x:{stacked:true,ticks:{color:p.text3,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:'rgba(255,255,255,0.04)'}},y:{stacked:true,ticks:{color:p.text3,font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.06)'}}}}};
-  }else{
-    const data=months.map(m=>{const rated=entries.filter(e=>e.date?.startsWith(m)&&e.rating);return rated.length?+(rated.reduce((s,e)=>s+e.rating,0)/rated.length).toFixed(1):null;});
-    chartCfg={type:'line',data:{labels,datasets:[{label:'Note moy.',data,borderColor:p.accent,backgroundColor:p.accent+'22',borderWidth:2,pointBackgroundColor:p.accent,pointRadius:4,tension:0.3,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:p.text3,font:{size:10},maxRotation:45,autoSkip:false},grid:{color:'rgba(255,255,255,0.04)'}},y:{min:0,max:10,ticks:{color:p.text3,font:{size:10}},grid:{color:'rgba(255,255,255,0.06)'}}}}};
+    const datasets = users.map(u=>({
+      label: (u.emoji||'')+' '+u.name,
+      data: months.map(m=>entries.filter(e=>e.date?.startsWith(m)&&e.userId===u.id).length),
+      borderColor: u.color,
+      backgroundColor: u.color + '22',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.3,
+      fill: multiUser ? false : true 
+    }));
+
+    chartCfg = {
+      type: 'line',
+      data: { labels: timeLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: multiUser, position: 'bottom', labels: { color: p.text2, font: { size: 10 }, boxWidth: 10 } }
+        },
+        scales: {
+          x: { ticks: { color: p.text3, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { beginAtZero: true, ticks: { color: p.text3, font: { size: 10 }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.06)' } }
+        }
+      }
+    };
+
+} else if(tlTab==='types'){
+    const allTypes = [...new Set(entries.map(e=>e.type))];
+    const userLabels = users.map(u => (u.emoji || '') + ' ' + u.name);
+    
+    const datasets = allTypes.map((t, i) => {
+      const typeColor = TYPE_BG[t] ? TYPE_BG[t].replace('0.15', '0.8').replace('0.2', '0.8').replace('0.1', '0.8') : p.accent;
+      
+      return {
+        label: (TYPE_ICONS[t]||'') + ' ' + t,
+        data: users.map(u => {
+          const userEntries = entries.filter(e => e.userId === u.id);
+          if (userEntries.length === 0) return 0;
+          const count = userEntries.filter(e => e.type === t).length;
+          return parseFloat(((count / userEntries.length) * 100).toFixed(1));
+        }),
+        backgroundColor: typeColor,
+        borderWidth: 0,
+        stack: 'total' 
+      };
+    });
+
+    chartCfg = {
+      type: 'bar',
+      data: { labels: userLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { color: p.text2, font: { size: 9 }, boxWidth: 8, padding: 4 } },
+          tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%` } }
+        },
+        scales: {
+          x: { 
+            stacked: true, 
+            ticks: { color: p.text, font: { size: 10 } }, 
+            grid: { display: false } 
+          },
+          y: { 
+            stacked: true, 
+            max: 100, 
+            ticks: { color: p.text3, font: { size: 10 }, callback: v => v+'%' }, 
+            grid: { color: 'rgba(255,255,255,0.06)' } 
+          }
+        }
+      }
+    };
+
+  } else {
+    const datasets = users.map(u=>{
+      const data = months.map(m=>{
+        const rated=entries.filter(e=>e.date?.startsWith(m)&&e.rating&&e.userId===u.id);
+        return rated.length?+(rated.reduce((s,e)=>s+e.rating,0)/rated.length).toFixed(1):null;
+      });
+      return { label:(u.emoji||'')+' '+u.name, data, borderColor:u.color, borderWidth:2, pointRadius:4, tension:0.3, fill:false, spanGaps:true };
+    });
+
+    chartCfg = {
+      type: 'line',
+      data: { labels: timeLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: multiUser, position: 'bottom', labels: { color: p.text2, font: { size: 10 }, boxWidth: 10 } } },
+        scales: {
+          x: { ticks: { color: p.text3, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { min: 0, max: 10, ticks: { color: p.text3, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' } }
+        }
+      }
+    };
   }
-  tlChartInstance=new Chart(ctx,chartCfg);
+
+  tlChartInstance = new Chart(ctx, chartCfg);
 }
 
 // ══════════════════════════════════════════
 // METRICS
 // ══════════════════════════════════════════
+function toggleMetricUser(userId){
+  if(!selectedMetricUsers) selectedMetricUsers = new Set(db.users.map(u=>u.id));
+  if(selectedMetricUsers.has(userId)) selectedMetricUsers.delete(userId);
+  else selectedMetricUsers.add(userId);
+  if(selectedMetricUsers.size===0) selectedMetricUsers=new Set(db.users.map(u=>u.id));
+  renderMetrics();
+}
+
+function metricsEntries(){
+  const base = visibleEntries();
+  if(!selectedMetricUsers) return base;
+  return base.filter(e=>selectedMetricUsers.has(e.userId));
+}
+
+function renderMetricsUserFilter(){
+  const users = viewMode==='self'
+    ? db.users.filter(u=>u.id===currentUserId)
+    : db.users;
+  if(users.length<=1){
+    document.getElementById('metricsUserFilter').innerHTML='';
+    return;
+  }
+  const allSelected = !selectedMetricUsers || selectedMetricUsers.size===users.length;
+  document.getElementById('metricsUserFilter').innerHTML=
+    `<button class="user-chip${allSelected?' active':''}" onclick="selectedMetricUsers=null;renderMetrics()" style="border-color:var(--border2)">
+      <span>Tous</span>
+    </button>`+
+    users.map(u=>{
+      const active = !selectedMetricUsers || selectedMetricUsers.has(u.id);
+      return `<button class="user-chip${active?' active':''}" onclick="toggleMetricUser('${u.id}')" style="${active?`border-color:${u.color};background:${u.color}22;color:${u.color}`:''}">
+        <div class="user-chip-dot" style="background:${u.color}"></div>
+        <span>${u.emoji||''} ${u.name}</span>
+      </button>`;
+    }).join('');
+}
+
 function renderMetrics(){
-  const entries=visibleEntries();
+  renderMetricsUserFilter();
+  const entries = metricsEntries();
+  const users = viewMode==='self'
+    ? db.users.filter(u=>u.id===currentUserId)
+    : db.users;
+  const activeUsers = selectedMetricUsers
+    ? users.filter(u=>selectedMetricUsers.has(u.id))
+    : users;
+
   const rated=entries.filter(e=>e.rating);
   const totalSpend=entries.filter(e=>e.price).reduce((s,e)=>s+e.price,0);
   const avgRating=rated.length?rated.reduce((s,e)=>s+e.rating,0)/rated.length:0;
   const typeCount=entries.reduce((a,e)=>{a[e.type]=(a[e.type]||0)+1;return a},{});
   const topType=Object.entries(typeCount).sort((a,b)=>b[1]-a[1])[0];
   const p=PALETTES.find(x=>x.id===currentPaletteId)||PALETTES[0];
+
   document.getElementById('metricGrid').innerHTML=`
     <div class="metric-card"><div class="metric-label">Total</div><div class="metric-val">${entries.length}</div><div class="metric-sub">boissons</div></div>
     <div class="metric-card"><div class="metric-label">Dépenses</div><div class="metric-val">${totalSpend.toFixed(2)}€</div><div class="metric-sub">en 50cl estimés</div></div>
     <div class="metric-card"><div class="metric-label">Note moy.</div><div class="metric-val">${avgRating?avgRating.toFixed(1):'—'}</div><div class="metric-sub">sur ${rated.length} notées</div></div>
     <div class="metric-card"><div class="metric-label">Type favori</div><div class="metric-val" style="font-size:17px">${topType?TYPE_ICONS[topType[0]]||'':''} ${topType?topType[0]:'—'}</div><div class="metric-sub">${topType?topType[1]+' entrées':''}</div></div>`;
-  renderTimeline(entries);
+
+  renderTimeline(entries, activeUsers);
+
   const barColors=[p.accent,p.accent2,AVATAR_COLORS[2],AVATAR_COLORS[4],AVATAR_COLORS[6],AVATAR_COLORS[1],AVATAR_COLORS[3],AVATAR_COLORS[5]];
   const maxT=Math.max(...Object.values(typeCount),1);
   document.getElementById('typeChart').innerHTML=Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).map(([t,c],i)=>`
     <div class="bar-row"><div class="bar-label">${TYPE_ICONS[t]||''} ${t}</div>
     <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/maxT*100)}%;background:${barColors[i%barColors.length]}"><span class="bar-pct">${Math.round(c/entries.length*100)}%</span></div></div>
     <div class="bar-count">${c}</div></div>`).join('');
+
   const brewCount=entries.filter(e=>e.brewery).reduce((a,e)=>{a[e.brewery]=(a[e.brewery]||0)+1;return a},{});
   const maxB=Math.max(...Object.values(brewCount),1);
   document.getElementById('brewChart').innerHTML=Object.entries(brewCount).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([b,c],i)=>`
     <div class="bar-row"><div class="bar-label">${b}</div>
     <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/maxB*100)}%;background:${barColors[(i+2)%barColors.length]}"></div></div>
     <div class="bar-count">${c}</div></div>`).join('');
+
   const locCount=entries.filter(e=>e.location).reduce((a,e)=>{a[e.location]=(a[e.location]||0)+1;return a},{});
   const maxL=Math.max(...Object.values(locCount),1);
   document.getElementById('locChart').innerHTML=Object.entries(locCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([l,c],i)=>`
     <div class="bar-row"><div class="bar-label" title="${l}">${l}</div>
     <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/maxL*100)}%;background:${barColors[(i+4)%barColors.length]}"></div></div>
     <div class="bar-count">${c}</div></div>`).join('')||'<div style="font-size:13px;color:var(--text3);padding:6px 0">Aucun lieu enregistré.</div>';
-  const top=entries.filter(e=>e.rating).sort((a,b)=>b.rating-a.rating).slice(0,5);
-  document.getElementById('topList').innerHTML=top.length?`<div class="top-list">${top.map((e,i)=>`<div class="top-item"><span class="top-rank">${['🥇','🥈','🥉'][i]||i+1+'.'}</span><div style="flex:1;min-width:0"><div class="top-name">${e.name}</div><div class="top-brewery">${e.brewery||''}</div></div><span class="top-score">${e.rating}/10</span></div>`).join('')}</div>`:'<div style="font-size:13px;color:var(--text3);padding:6px 0">Notez vos boissons !</div>';
+
+  // Top list with user name
+  const top=entries.filter(e=>e.rating).sort((a,b)=>b.rating-a.rating).slice(0,8);
+  document.getElementById('topList').innerHTML=top.length?`<div class="top-list">${top.map((e,i)=>{
+    const u=db.users.find(x=>x.id===e.userId)||{name:'?',color:'#888',emoji:'?'};
+    return `<div class="top-item">
+      <span class="top-rank">${['🥇','🥈','🥉'][i]||i+1+'.'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="top-name">${e.name}</div>
+        <div class="top-brewery" style="display:flex;align-items:center;gap:5px">
+          <span style="color:${u.color}">${u.emoji||u.name[0]} ${u.name}</span>
+          ${e.brewery?`<span>· ${e.brewery}</span>`:''}
+        </div>
+      </div>
+      <span class="top-score">${e.rating}/10</span>
+    </div>`;
+  }).join('')}</div>`:'<div style="font-size:13px;color:var(--text3);padding:6px 0">Notez vos boissons !</div>';
 }
 
 // ══════════════════════════════════════════

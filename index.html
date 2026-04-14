@@ -1209,7 +1209,7 @@ function renderMetrics(){
 
   document.getElementById('metricGrid').innerHTML=`
     <div class="metric-card"><div class="metric-label">Boissons enregistrées</div><div class="metric-val">${entries.length}</div><div class="metric-sub">boissons</div></div>
-    <div class="metric-card"><div class="metric-label">>Volume</div><div class="metric-val">${entries.length * 0.5}€</div><div class="metric-sub">litres estimés</div></div>
+    <div class="metric-card"><div class="metric-label">Volume</div><div class="metric-val">${entries.length * 0.5}</div><div class="metric-sub">litres estimés</div></div>
     <div class="metric-card"><div class="metric-label">Note moy.</div><div class="metric-val">${avgRating?avgRating.toFixed(1):'—'}</div><div class="metric-sub">sur ${rated.length} notées</div></div>
     <div class="metric-card"><div class="metric-label">Type favori</div><div class="metric-val" style="font-size:17px">${topType?TYPE_ICONS[topType[0]]||'':''} ${topType?topType[0]:'—'}</div><div class="metric-sub">${topType?topType[1]+' entrées':''}</div></div>`;
 
